@@ -1,9 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { ReservationState } from '../types';
 
+const getToday = () => {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${today.getFullYear()}-${month}-${day}`;
+};
+
 const initialState: ReservationState = {
   selectedTableId: null,
-  date: new Date().toISOString().split('T')[0],
+  date: getToday(),
   time: '19:00',
   guests: 2,
   area: 'Salón Principal',

@@ -1,15 +1,61 @@
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../store';
-import { Calendar, Clock, Users, Check } from 'lucide-react';
-import { MOCK_TABLES } from '../../mockData';
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../../../../store";
+import { Calendar, Clock, Users, Check } from "lucide-react";
+import { MOCK_TABLES } from "../../mockData";
+import { setDateTime } from "../../store/bookingSlice";
 
-export default function BookingSidebar({ restaurantId: _ }: { restaurantId: string }) {
+const getToday = () => {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${today.getFullYear()}-${month}-${day}`;
+};
+
+const getCurrentTime = () => {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+};
+
+const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
+  const hour24 = Math.floor(i / 2);
+  const minute = i % 2 === 0 ? "00" : "30";
+  const value = `${String(hour24).padStart(2, "0")}:${minute}`;
+  const period = hour24 >= 12 ? "p.m." : "a.m.";
+  const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+  const label = `${hour12}:${minute} ${period}`;
+  return { value, label };
+});
+
+export default function BookingSidebar({
+  restaurantId: _,
+}: {
+  restaurantId: string;
+}) {
+  const dispatch = useDispatch();
   const bookingState = useSelector((state: RootState) => state.booking);
-  const selectedTableInfo = MOCK_TABLES.find((t: any) => t.id === bookingState.selectedTableId);
+  const selectedTableInfo = MOCK_TABLES.find(
+    (t: any) => t.id === bookingState.selectedTableId,
+  );
+  const today = getToday();
+  const minimumTime =
+    bookingState.date === today ? getCurrentTime() : undefined;
+
+  const handleDateChange = (date: string) => {
+    const time =
+      date === today && bookingState.time < getCurrentTime()
+        ? getCurrentTime()
+        : bookingState.time;
+    dispatch(setDateTime({ date, time }));
+  };
+
+  const handleTimeChange = (time: string) => {
+    dispatch(setDateTime({ date: bookingState.date, time }));
+  };
 
   return (
     <form className="bg-card p-6 md:p-8 rounded-2xl border border-border shadow-sm flex flex-col h-full overflow-y-auto">
-      
       {/* Grid: Fecha / Hora */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="space-y-2">
@@ -19,7 +65,9 @@ export default function BookingSidebar({ restaurantId: _ }: { restaurantId: stri
           <input
             type="date"
             required
-            defaultValue={bookingState.date}
+            min={today}
+            value={bookingState.date}
+            onChange={(event) => handleDateChange(event.target.value)}
             className="w-full p-2.5 rounded-lg border border-border bg-brand-secondary focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-sm font-medium text-brand-primary"
           />
         </div>
@@ -27,12 +75,28 @@ export default function BookingSidebar({ restaurantId: _ }: { restaurantId: stri
           <label className="text-sm font-medium flex items-center gap-1.5 text-gray-500">
             <Clock className="w-4 h-4" /> Hora
           </label>
-          <input
-            type="time"
+          <select
             required
-            defaultValue={bookingState.time}
-            className="w-full p-2.5 rounded-lg border border-border bg-brand-secondary focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-sm font-medium text-brand-primary"
-          />
+            value={bookingState.time}
+            onChange={(event) => handleTimeChange(event.target.value)}
+            className="w-full p-2.5 rounded-lg border border-border bg-brand-secondary focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-sm font-medium text-brand-primary outline-none cursor-pointer appearance-none"
+            style={{
+              backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 0.5rem center',
+              backgroundSize: '1em 1em',
+              paddingRight: '2.5rem'
+            }}
+          >
+            {TIME_OPTIONS.map((time) => {
+              const isDisabled = minimumTime ? time.value < minimumTime : false;
+              return (
+                <option key={time.value} value={time.value} disabled={isDisabled}>
+                  {time.label}
+                </option>
+              );
+            })}
+          </select>
         </div>
       </div>
 
@@ -47,7 +111,9 @@ export default function BookingSidebar({ restaurantId: _ }: { restaurantId: stri
             className="w-full p-2.5 rounded-lg border border-border bg-brand-secondary focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-sm font-medium text-brand-primary outline-none"
           >
             {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-              <option key={n} value={n}>{n} pax</option>
+              <option key={n} value={n}>
+                {n} personas
+              </option>
             ))}
           </select>
         </div>
@@ -59,6 +125,7 @@ export default function BookingSidebar({ restaurantId: _ }: { restaurantId: stri
             defaultValue="2 horas"
             className="w-full p-2.5 rounded-lg border border-border bg-brand-secondary focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-sm font-medium text-brand-primary outline-none"
           >
+            <option value="30 minutos">30 minutos</option>
             <option value="1 hora">1 hora</option>
             <option value="1.5 horas">1.5 horas</option>
             <option value="2 horas">2 horas</option>
@@ -76,7 +143,7 @@ export default function BookingSidebar({ restaurantId: _ }: { restaurantId: stri
 
       {selectedTableInfo && (
         <div className="mb-6 p-4 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-sm font-medium flex items-center gap-2">
-          <Check className="w-4 h-4" /> 
+          <Check className="w-4 h-4" />
           Mesa {selectedTableInfo.label} seleccionada.
         </div>
       )}
