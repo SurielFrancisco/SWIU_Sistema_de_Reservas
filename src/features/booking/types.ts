@@ -11,7 +11,19 @@ export interface TableInfo {
     x: number; // Porcentaje relativo al contenedor (0-100)
     y: number; // Porcentaje relativo al contenedor (0-100)
   };
+  area?: string; // e.g. "Junto a la ventana"
   isAccessible?: boolean;
+}
+
+export interface FloorLayout {
+  id: string;
+  name: string; // e.g. "Planta Baja", "Rooftop"
+  tables: TableInfo[];
+}
+
+export interface RestaurantLayout {
+  id: string;
+  floors: FloorLayout[];
 }
 
 export interface ReservationDetails {

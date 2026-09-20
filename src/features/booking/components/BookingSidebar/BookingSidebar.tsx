@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../../store";
 import { Calendar, Clock, Users, Check } from "lucide-react";
-import { MOCK_TABLES } from "../../mockData";
+import { RESTAURANT_LAYOUTS } from "../../mockData";
 import { setDateTime, selectTable, addReservation } from "../../store/bookingSlice";
 import BookingModal from "../BookingModal";
 
@@ -31,15 +31,26 @@ const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
 });
 
 export default function BookingSidebar({
-  restaurantId: _,
+  restaurantId,
 }: {
   restaurantId: string;
 }) {
   const dispatch = useDispatch();
   const bookingState = useSelector((state: RootState) => state.booking);
-  const selectedTableInfo = MOCK_TABLES.find(
-    (t: any) => t.id === bookingState.selectedTableId,
-  );
+  
+  // Find the selected table across all floors of the current restaurant
+  const layout = RESTAURANT_LAYOUTS[restaurantId];
+  let selectedTableInfo = null;
+  if (layout && bookingState.selectedTableId) {
+    for (const floor of layout.floors) {
+      const table = floor.tables.find(t => t.id === bookingState.selectedTableId);
+      if (table) {
+        selectedTableInfo = table;
+        break;
+      }
+    }
+  }
+
   const today = getToday();
   const minimumTime =
     bookingState.date === today ? getCurrentTime() : undefined;

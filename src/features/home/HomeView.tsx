@@ -1,25 +1,7 @@
 import { Search, MapPin, Star, Utensils, ArrowRight, UtensilsCrossed } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-
-const MOCK_RESTAURANTS = [
-  {
-    id: 'rest-1',
-    name: 'El Asador Gourmet',
-    type: 'Cortes y Parrilla',
-    location: 'Centro Histórico',
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1544148103-0773bf10d330?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'rest-2',
-    name: 'Sushi Zen',
-    type: 'Comida Japonesa',
-    location: 'Plaza Norte',
-    rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80',
-  }
-];
+import { RESTAURANTS_LIST } from '../booking/mockData';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -138,7 +120,7 @@ export default function HomeView() {
           viewport={{ once: true, margin: "-100px" }}
           className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12"
         >
-          {MOCK_RESTAURANTS.map((restaurant) => (
+          {RESTAURANTS_LIST.map((restaurant) => (
             <motion.div 
               variants={itemVariants}
               key={restaurant.id} 

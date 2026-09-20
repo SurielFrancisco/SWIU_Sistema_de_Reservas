@@ -112,7 +112,7 @@ export default function BookingView() {
                   </div>
                   
                   <div className="flex-1 relative overflow-auto p-6 bg-brand-secondary/30">
-                     <TableMapContainer />
+                     <TableMapContainer restaurantId={id!} />
                   </div>
                 </div>
 
