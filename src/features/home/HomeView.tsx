@@ -1,4 +1,4 @@
-import { Search, MapPin, Star, Utensils } from 'lucide-react';
+import { Search, MapPin, Star, Utensils, ArrowRight, UtensilsCrossed } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -9,7 +9,7 @@ const MOCK_RESTAURANTS = [
     type: 'Cortes y Parrilla',
     location: 'Centro Histórico',
     rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1544148103-0773bf10d330?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1544148103-0773bf10d330?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80',
   },
   {
     id: 'rest-2',
@@ -17,7 +17,7 @@ const MOCK_RESTAURANTS = [
     type: 'Comida Japonesa',
     location: 'Plaza Norte',
     rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80',
   }
 ];
 
@@ -30,7 +30,7 @@ const containerVariants = {
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 30 },
   show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } }
 };
 
@@ -38,88 +38,151 @@ export default function HomeView() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-brand-secondary pb-20">
+    <div className="min-h-screen bg-brand-secondary text-brand-primary selection:bg-brand-primary/10 pb-24">
+      {/* Top Navigation / Logo */}
+      <nav className="absolute top-0 left-0 right-0 z-50 px-6 py-6 md:px-12 md:py-8 flex items-center justify-between pointer-events-none">
+        <div className="pointer-events-auto flex items-center gap-2 text-brand-primary cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.scrollTo(0, 0)}>
+          <UtensilsCrossed className="w-8 h-8" />
+          <span className="text-2xl font-serif font-bold tracking-tight">SDReservas</span>
+        </div>
+      </nav>
+
       {/* Hero Section */}
-      <div className="bg-brand-primary text-white pt-20 pb-28 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-brand-accent to-transparent mix-blend-screen"></div>
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
+      <div className="pt-32 pb-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden flex flex-col items-center justify-center text-center">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-brand-primary/[0.03] rounded-full blur-3xl pointer-events-none" 
+        />
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+          className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-brand-primary/[0.02] rounded-full blur-3xl pointer-events-none" 
+        />
+
+        <div className="max-w-4xl mx-auto relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl font-heading font-extrabold tracking-tight sm:text-6xl drop-shadow-lg"
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 text-sm font-medium text-gray-600 mb-8 shadow-sm"
           >
-            Encuentra tu mesa perfecta
+            <Utensils className="w-4 h-4 text-brand-primary" />
+            Descubre experiencias gastronómicas
+          </motion.div>
+
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.6 }}
+            className="text-5xl md:text-7xl font-serif font-medium tracking-tight text-brand-primary leading-tight"
+          >
+            Encuentra tu mesa <br className="hidden md:block" />
+            perfecta hoy.
           </motion.h1>
           <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mt-6 text-xl text-slate-300 font-light max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="mt-6 text-lg md:text-xl text-gray-500 font-light max-w-2xl mx-auto"
           >
-            Reserva en los mejores restaurantes de la ciudad al instante. Experiencias gastronómicas sin esperas.
+            Reserva al instante en los restaurantes más exclusivos de la ciudad. Sin llamadas, sin esperas.
           </motion.p>
           
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mt-10 max-w-2xl mx-auto flex rounded-2xl shadow-2xl overflow-hidden ring-4 ring-white/10"
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="mt-12 max-w-2xl mx-auto relative"
           >
-            <div className="relative flex-grow focus-within:z-10 bg-white">
-              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-slate-400" />
+            <div className="flex items-center bg-white rounded-full shadow-lg shadow-gray-200/50 p-2 border border-gray-100 transition-shadow focus-within:shadow-xl focus-within:shadow-gray-200/80 focus-within:border-gray-200">
+              <div className="pl-6 pr-2">
+                <Search className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 type="text"
-                className="w-full h-full pl-12 pr-4 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-0 sm:text-lg font-medium"
-                placeholder="Buscar por restaurante, tipo de comida..."
+                className="flex-1 w-full h-14 bg-transparent text-brand-primary placeholder-gray-400 focus:outline-none text-lg"
+                placeholder="Restaurantes, tipo de comida, zonas..."
               />
+              <button className="px-8 h-14 rounded-full text-white bg-brand-primary hover:bg-brand-primary/90 transition-colors font-medium text-lg flex items-center gap-2">
+                Buscar
+              </button>
             </div>
-            <button className="flex-shrink-0 px-8 py-4 border border-transparent text-lg font-heading font-bold text-white bg-brand-accent hover:bg-brand-accent-hover transition-colors focus:outline-none">
-              Buscar
-            </button>
           </motion.div>
         </div>
       </div>
 
-      {/* Recommended Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-20">
-        <div className="flex items-center mb-8 bg-white/80 backdrop-blur-md rounded-2xl py-3 px-6 shadow-sm border border-slate-100 max-w-max mx-auto">
-          <Utensils className="w-5 h-5 text-brand-accent mr-3" />
-          <h2 className="text-xl font-heading font-bold text-slate-800">Selecciones Premium</h2>
-        </div>
+      {/* Recommended Section (Editorial Cards) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 mt-10">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="flex items-center justify-between mb-10"
+        >
+          <h2 className="text-3xl font-serif font-medium text-brand-primary">
+            Selecciones Premium
+          </h2>
+          <button className="text-sm font-medium text-gray-500 hover:text-brand-primary transition-colors flex items-center gap-1 group">
+            Ver todos 
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </button>
+        </motion.div>
         
         <motion.div 
           variants={containerVariants}
           initial="hidden"
-          animate="show"
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+          whileInView="show"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12"
         >
           {MOCK_RESTAURANTS.map((restaurant) => (
             <motion.div 
               variants={itemVariants}
               key={restaurant.id} 
               onClick={() => navigate(`/restaurant/${restaurant.id}`)}
-              className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 cursor-pointer overflow-hidden border border-slate-100 group flex flex-col"
+              className="group relative rounded-[2rem] overflow-hidden cursor-pointer aspect-[4/3] md:aspect-[4/4] lg:aspect-[4/3] shadow-md hover:shadow-xl transition-all duration-500"
             >
-              <div className="h-56 w-full overflow-hidden relative">
-                <div className="absolute inset-0 bg-brand-primary/10 group-hover:bg-transparent transition-colors z-10"></div>
-                <img 
-                  src={restaurant.image} 
-                  alt={restaurant.name} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                />
-                <div className="absolute top-4 right-4 z-20 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center shadow-sm">
-                  <Star className="w-4 h-4 text-brand-accent mr-1.5 fill-brand-accent" />
-                  <span className="font-bold text-slate-800 text-sm">{restaurant.rating}</span>
+              {/* Image Background */}
+              <img 
+                src={restaurant.image} 
+                alt={restaurant.name} 
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+              />
+              
+              {/* Gradient Overlay for text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+
+              {/* Top Right Badge */}
+              <div className="absolute top-6 right-6">
+                <div className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1.5 rounded-full flex items-center shadow-sm">
+                  <Star className="w-4 h-4 text-yellow-400 mr-1.5 fill-yellow-400" />
+                  <span className="font-semibold text-sm">{restaurant.rating}</span>
                 </div>
               </div>
-              <div className="p-6 flex-1 flex flex-col">
-                <h3 className="text-2xl font-heading font-bold text-brand-primary mb-2 group-hover:text-brand-accent transition-colors">{restaurant.name}</h3>
-                <p className="text-slate-500 font-medium mb-4">{restaurant.type}</p>
-                <div className="mt-auto flex items-center text-slate-400 text-sm font-medium pt-4 border-t border-slate-100">
-                  <MapPin className="w-4 h-4 mr-2 text-brand-accent/70" />
-                  {restaurant.location}
+
+              {/* Bottom Content Area */}
+              <div className="absolute inset-x-0 bottom-0 p-8 flex flex-col justify-end transform transition-transform duration-500">
+                <div className="flex justify-between items-end">
+                  <div>
+                    <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm text-white border border-white/20 rounded-full text-xs font-medium uppercase tracking-wider mb-4">
+                      {restaurant.type}
+                    </span>
+                    <h3 className="text-3xl lg:text-4xl font-serif font-medium text-white mb-2 leading-tight">
+                      {restaurant.name}
+                    </h3>
+                    <div className="flex items-center text-white/80 text-sm font-medium">
+                      <MapPin className="w-4 h-4 mr-1.5" />
+                      {restaurant.location}
+                    </div>
+                  </div>
+                  
+                  {/* Hover Arrow Indicator */}
+                  <div className="w-12 h-12 rounded-full bg-white text-brand-primary flex items-center justify-center translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 shadow-lg">
+                    <ArrowRight className="w-5 h-5 -rotate-45" />
+                  </div>
                 </div>
               </div>
             </motion.div>
