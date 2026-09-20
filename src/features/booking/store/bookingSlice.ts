@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ReservationState } from '../types';
+import { ReservationState, ReservationDetails } from '../types';
 
 const getToday = () => {
   const today = new Date();
@@ -38,13 +38,17 @@ const bookingSlice = createSlice({
     setPreferences: (state, action: PayloadAction<string>) => {
       state.preferences = action.payload;
     },
-    addReservation: (state, action: PayloadAction<string>) => {
-      if (!state.reservations.includes(action.payload)) {
-        state.reservations.push(action.payload);
+    addReservation: (state, action: PayloadAction<ReservationDetails>) => {
+      state.reservations.push(action.payload);
+    },
+    cancelReservation: (state, action: PayloadAction<string>) => {
+      const reservation = state.reservations.find(r => r.id === action.payload);
+      if (reservation) {
+        reservation.status = 'cancelled';
       }
     },
   },
 });
 
-export const { selectTable, setDateTime, setGuests, setArea, setPreferences, addReservation } = bookingSlice.actions;
+export const { selectTable, setDateTime, setGuests, setArea, setPreferences, addReservation, cancelReservation } = bookingSlice.actions;
 export default bookingSlice.reducer;

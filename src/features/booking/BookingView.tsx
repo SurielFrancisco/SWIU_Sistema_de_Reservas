@@ -2,7 +2,8 @@ import { UtensilsCrossed, UserCircle, Map as MapIcon, Calendar as CalendarIcon }
 import { useParams } from 'react-router-dom';
 import TableMapContainer from './components/TableMap/TableMapContainer';
 import BookingSidebar from './components/BookingSidebar/BookingSidebar';
-import { motion } from 'framer-motion';
+import ReservationsList from './components/ReservationsList';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 
 export default function BookingView() {
@@ -67,54 +68,79 @@ export default function BookingView() {
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-auto p-4 md:p-8 relative">
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="max-w-[1400px] mx-auto flex flex-col h-full"
-        >
-          {/* Header */}
-          <div className="mb-8 flex-shrink-0">
-            <h2 className="text-3xl font-serif font-medium text-brand-primary">
-              Crear Nueva Reserva
-            </h2>
-            <p className="text-gray-500 mt-1">
-              Asegura tu lugar en SDReservas para una experiencia inolvidable.
-            </p>
-          </div>
+      <main className="flex-1 overflow-hidden p-4 md:p-8 relative">
+        <AnimatePresence mode="wait">
+          {activeTab === 'mapa' ? (
+            <motion.div 
+              key="mapa"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="max-w-[1400px] mx-auto flex flex-col h-full"
+            >
+              {/* Header */}
+              <div className="mb-8 flex-shrink-0">
+                <h2 className="text-3xl font-serif font-medium text-brand-primary">
+                  Crear Nueva Reserva
+                </h2>
+                <p className="text-gray-500 mt-1">
+                  Asegura tu lugar en SDReservas para una experiencia inolvidable.
+                </p>
+              </div>
 
-          <div className="flex-1 flex flex-col lg:flex-row gap-8 min-h-0">
-            {/* Map Column */}
-            <div className="flex-1 bg-card rounded-2xl border border-border shadow-sm flex flex-col overflow-hidden relative">
-              <div className="p-5 border-b border-border flex justify-between items-center bg-white z-10 relative">
-                <h3 className="font-medium text-brand-primary text-sm">
-                  Plano del Restaurante
-                </h3>
-                <div className="flex gap-4 text-[11px] md:text-xs font-medium text-gray-500">
-                  <span className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 bg-white border border-border rounded-sm shadow-sm" /> Disponible
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 bg-brand-primary border border-brand-primary rounded-sm" /> Seleccionada
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 bg-[#F5F5F5] border border-border rounded-sm" /> Ocupada
-                  </span>
+              <div className="flex-1 flex flex-col lg:flex-row gap-8 min-h-0">
+                {/* Map Column */}
+                <div className="flex-1 bg-card rounded-2xl border border-border shadow-sm flex flex-col overflow-hidden relative">
+                  <div className="p-5 border-b border-border flex justify-between items-center bg-white z-10 relative">
+                    <h3 className="font-medium text-brand-primary text-sm">
+                      Plano del Restaurante
+                    </h3>
+                    <div className="flex gap-4 text-[11px] md:text-xs font-medium text-gray-500">
+                      <span className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 bg-white border border-border rounded-sm shadow-sm" /> Disponible
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 bg-brand-primary border border-brand-primary rounded-sm" /> Seleccionada
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 bg-[#F5F5F5] border border-border rounded-sm" /> Ocupada
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 relative overflow-auto p-6 bg-brand-secondary/30">
+                     <TableMapContainer />
+                  </div>
+                </div>
+
+                {/* Form Column */}
+                <div className="w-full lg:w-[420px] flex-shrink-0 h-full overflow-y-auto">
+                  <BookingSidebar restaurantId={id!} />
                 </div>
               </div>
-              
-              <div className="flex-1 relative overflow-auto p-6 bg-brand-secondary/30">
-                 <TableMapContainer />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="reservas"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="max-w-[1400px] mx-auto flex flex-col h-full"
+            >
+              <div className="mb-8 flex-shrink-0">
+                <h2 className="text-3xl font-serif font-medium text-brand-primary">
+                  Mis Reservas
+                </h2>
+                <p className="text-gray-500 mt-1">
+                  Administra tus reservas actuales y revisa tu historial.
+                </p>
               </div>
-            </div>
-
-            {/* Form Column */}
-            <div className="w-full lg:w-[420px] flex-shrink-0">
-              <BookingSidebar restaurantId={id!} />
-            </div>
-          </div>
-        </motion.div>
+              <ReservationsList />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );

@@ -14,6 +14,17 @@ export interface TableInfo {
   isAccessible?: boolean;
 }
 
+export interface ReservationDetails {
+  id: string;
+  tableId: string;
+  tableLabel: string;
+  date: string;
+  time: string;
+  guests: number;
+  customerName: string;
+  status: 'upcoming' | 'completed' | 'cancelled';
+}
+
 export interface ReservationState {
   selectedTableId: string | null;
   date: string;
@@ -21,5 +32,5 @@ export interface ReservationState {
   guests: number;
   area: string;
   preferences: string;
-  reservations: string[];
+  reservations: ReservationDetails[];
 }

@@ -20,7 +20,7 @@ export default function Table({ table }: TableProps) {
   const reservations = useSelector((state: RootState) => state.booking.reservations);
   const isSelected = selectedTableId === table.id;
   
-  const effectiveStatus = reservations.includes(table.id) ? 'occupied' : table.status;
+  const effectiveStatus = reservations.some(r => r.tableId === table.id && r.status === 'upcoming') ? 'occupied' : table.status;
 
   const handleSelect = () => {
     if (effectiveStatus === 'available') {

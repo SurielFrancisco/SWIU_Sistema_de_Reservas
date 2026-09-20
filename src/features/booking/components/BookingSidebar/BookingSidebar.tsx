@@ -58,9 +58,19 @@ export default function BookingSidebar({
     dispatch(setDateTime({ date: bookingState.date, time }));
   };
 
-  const handleConfirmSuccess = () => {
-    if (bookingState.selectedTableId) {
-      dispatch(addReservation(bookingState.selectedTableId));
+  const handleConfirmSuccess = (customerName: string) => {
+    if (bookingState.selectedTableId && selectedTableInfo) {
+      const newReservation = {
+        id: Math.random().toString(36).substr(2, 9),
+        tableId: bookingState.selectedTableId,
+        tableLabel: selectedTableInfo.label,
+        date: bookingState.date,
+        time: bookingState.time,
+        guests: bookingState.guests,
+        customerName: customerName,
+        status: 'upcoming' as const,
+      };
+      dispatch(addReservation(newReservation));
     }
     setIsModalOpen(false);
     // Optionally reset state or navigate away

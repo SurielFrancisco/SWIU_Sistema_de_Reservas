@@ -11,7 +11,7 @@ interface BookingModalProps {
     guests: number;
     tableLabel: string;
   };
-  onConfirmSuccess: () => void;
+  onConfirmSuccess: (customerName: string) => void;
 }
 
 export default function BookingModal({
@@ -48,7 +48,7 @@ export default function BookingModal({
       
       // Notify parent after a short delay
       setTimeout(() => {
-        onConfirmSuccess();
+        onConfirmSuccess(formData.name || 'Cliente sin nombre');
         setIsSuccess(false);
         setFormData({ name: '', email: '', phone: '', specialRequests: '' }); // Reset
       }, 2000);
