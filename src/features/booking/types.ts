@@ -21,4 +21,5 @@ export interface ReservationState {
   guests: number;
   area: string;
   preferences: string;
+  reservations: string[];
 }

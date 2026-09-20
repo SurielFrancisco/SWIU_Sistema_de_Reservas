@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../../store";
 import { Calendar, Clock, Users, Check } from "lucide-react";
 import { MOCK_TABLES } from "../../mockData";
-import { setDateTime, selectTable } from "../../store/bookingSlice";
+import { setDateTime, selectTable, addReservation } from "../../store/bookingSlice";
 import BookingModal from "../BookingModal";
 
 const getToday = () => {
@@ -59,6 +59,9 @@ export default function BookingSidebar({
   };
 
   const handleConfirmSuccess = () => {
+    if (bookingState.selectedTableId) {
+      dispatch(addReservation(bookingState.selectedTableId));
+    }
     setIsModalOpen(false);
     // Optionally reset state or navigate away
     dispatch(selectTable(null));

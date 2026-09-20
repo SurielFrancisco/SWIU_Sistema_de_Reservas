@@ -15,6 +15,7 @@ const initialState: ReservationState = {
   guests: 2,
   area: 'Salón Principal',
   preferences: '',
+  reservations: [],
 };
 
 const bookingSlice = createSlice({
@@ -37,8 +38,13 @@ const bookingSlice = createSlice({
     setPreferences: (state, action: PayloadAction<string>) => {
       state.preferences = action.payload;
     },
+    addReservation: (state, action: PayloadAction<string>) => {
+      if (!state.reservations.includes(action.payload)) {
+        state.reservations.push(action.payload);
+      }
+    },
   },
 });
 
-export const { selectTable, setDateTime, setGuests, setArea, setPreferences } = bookingSlice.actions;
+export const { selectTable, setDateTime, setGuests, setArea, setPreferences, addReservation } = bookingSlice.actions;
 export default bookingSlice.reducer;

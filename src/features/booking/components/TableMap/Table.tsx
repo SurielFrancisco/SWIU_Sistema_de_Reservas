@@ -17,10 +17,13 @@ interface TableProps {
 export default function Table({ table }: TableProps) {
   const dispatch = useDispatch();
   const selectedTableId = useSelector((state: RootState) => state.booking.selectedTableId);
+  const reservations = useSelector((state: RootState) => state.booking.reservations);
   const isSelected = selectedTableId === table.id;
+  
+  const effectiveStatus = reservations.includes(table.id) ? 'occupied' : table.status;
 
   const handleSelect = () => {
-    if (table.status === 'available') {
+    if (effectiveStatus === 'available') {
       dispatch({ type: 'booking/selectTable', payload: isSelected ? null : table.id });
     }
   };
@@ -38,7 +41,7 @@ export default function Table({ table }: TableProps) {
   if (isSelected) {
     statusClasses = 'bg-brand-primary border-brand-primary text-white shadow-lg z-10 scale-110';
   } else {
-    switch (table.status) {
+    switch (effectiveStatus) {
       case 'available':
         statusClasses = 'bg-white border-border text-brand-primary hover:border-brand-primary/50 hover:shadow-md cursor-pointer shadow-sm';
         break;
@@ -63,7 +66,7 @@ export default function Table({ table }: TableProps) {
     >
       <button
         type="button"
-        disabled={table.status !== 'available'}
+        disabled={effectiveStatus !== 'available'}
         onClick={handleSelect}
         className={cn(
           'flex flex-col items-center justify-center border-2 transition-all duration-200 relative outline-none focus:ring-2 focus:ring-brand-primary/30',
