@@ -1,5 +1,5 @@
 import { UtensilsCrossed, UserCircle, Map as MapIcon, Calendar as CalendarIcon } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import TableMapContainer from './components/TableMap/TableMapContainer';
 import BookingSidebar from './components/BookingSidebar/BookingSidebar';
 import ReservationsList from './components/ReservationsList';
@@ -17,10 +17,12 @@ export default function BookingView() {
       {/* Left Sidebar */}
       <div className="w-64 bg-card border-r border-border h-screen flex flex-col z-10 relative shadow-sm shrink-0">
         <div className="p-6 border-b border-border">
-          <h1 className="text-2xl font-serif font-semibold tracking-tight flex items-center gap-2">
-            <UtensilsCrossed className="w-6 h-6 text-brand-primary" />
-            SDReservas
-          </h1>
+          <Link to="/" className="inline-block hover:opacity-80 transition-opacity">
+            <h1 className="text-2xl font-serif font-semibold tracking-tight flex items-center gap-2">
+              <UtensilsCrossed className="w-6 h-6 text-brand-primary" />
+              SDReservas
+            </h1>
+          </Link>
           <div className="mt-6 flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-brand-secondary flex items-center justify-center border border-border">
               <UserCircle className="w-6 h-6 text-gray-400" />
