@@ -1,7 +1,9 @@
-import { Search, MapPin, Star, Utensils, ArrowRight, UtensilsCrossed } from 'lucide-react';
+import { UtensilsCrossed, ArrowRight, Search, Star, MapPin, Calendar as CalendarIcon, X, Utensils, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { RESTAURANTS_LIST } from '../booking/mockData';
+import { useState } from 'react';
+import ReservationsList from '../booking/components/ReservationsList';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -18,14 +20,29 @@ const itemVariants = {
 
 export default function HomeView() {
   const navigate = useNavigate();
+  const [showReservations, setShowReservations] = useState(false);
 
   return (
-    <div className="min-h-screen bg-brand-secondary text-brand-primary selection:bg-brand-primary/10 pb-24">
+    <div className="min-h-screen bg-brand-secondary text-brand-primary selection:bg-brand-primary/10 pb-24 relative overflow-hidden">
       {/* Top Navigation / Logo */}
       <nav className="absolute top-0 left-0 right-0 z-50 px-6 py-6 md:px-12 md:py-8 flex items-center justify-between pointer-events-none">
         <div className="pointer-events-auto flex items-center gap-2 text-brand-primary cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.scrollTo(0, 0)}>
           <UtensilsCrossed className="w-8 h-8" />
           <span className="text-2xl font-serif font-bold tracking-tight">SDReservas</span>
+        </div>
+        
+        <div className="pointer-events-auto flex items-center gap-3">
+          <button 
+            onClick={() => setShowReservations(true)}
+            className="flex items-center gap-2 bg-white/50 backdrop-blur-md px-4 py-2 rounded-full border border-gray-200/50 hover:bg-white hover:shadow-md transition-all shadow-sm text-sm font-medium text-brand-primary"
+          >
+            <CalendarIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">Mis Reservas</span>
+          </button>
+          
+          <button className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-white/50 backdrop-blur-md rounded-full border border-gray-200/50 hover:bg-white hover:shadow-md transition-all shadow-sm text-brand-primary">
+            <User className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
         </div>
       </nav>
 
@@ -171,6 +188,44 @@ export default function HomeView() {
           ))}
         </motion.div>
       </div>
+
+      {/* Slide-Over de Reservas */}
+      <AnimatePresence>
+        {showReservations && (
+          <div className="fixed inset-0 z-[100] flex justify-end">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowReservations(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-2xl bg-brand-secondary h-full shadow-2xl flex flex-col"
+            >
+              <div className="p-6 border-b border-border flex justify-between items-center bg-white z-10 shadow-sm shrink-0">
+                <div>
+                  <h2 className="text-2xl font-serif font-medium text-brand-primary">Mis Reservas</h2>
+                  <p className="text-sm text-gray-500">Historial y próximas visitas</p>
+                </div>
+                <button 
+                  onClick={() => setShowReservations(false)} 
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
+                >
+                  <X className="w-6 h-6 text-gray-500" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                <ReservationsList />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
