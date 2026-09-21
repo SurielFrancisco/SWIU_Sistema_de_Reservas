@@ -61,8 +61,7 @@ export default function ReservationsList() {
                     {upcomingReservations.length}
                   </span>
                 </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                   <AnimatePresence>
                     {upcomingReservations.map((res) => (
                       <motion.div
@@ -83,7 +82,7 @@ export default function ReservationsList() {
                             <h4 className="font-medium text-gray-900 text-lg">{res.date}</h4>
                             <div className="text-brand-primary font-bold text-xl mt-0.5">{res.time}</div>
                           </div>
-                          <div className="w-12 h-12 bg-brand-secondary rounded-xl flex items-center justify-center font-serif text-lg font-medium text-brand-primary border border-gray-100">
+                          <div className="h-12 min-w-[3rem] px-3 shrink-0 bg-brand-secondary rounded-xl flex items-center justify-center font-serif text-lg font-medium text-brand-primary border border-gray-100 whitespace-nowrap">
                             {res.tableLabel}
                           </div>
                         </div>
@@ -130,7 +129,7 @@ export default function ReservationsList() {
                     <Clock className="w-5 h-5" />
                     Historial y Canceladas
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60">
+                  <div className="grid gap-6 opacity-60" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                     {pastOrCancelled.map((res) => (
                       <div key={res.id} className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
                         <div className="flex justify-between items-start mb-4">
