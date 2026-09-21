@@ -37,7 +37,7 @@ export default function BookingSidebar({
 }) {
   const dispatch = useDispatch();
   const bookingState = useSelector((state: RootState) => state.booking);
-  
+
   // Find the selected table across all floors of the current restaurant
   const layout = RESTAURANT_LAYOUTS[restaurantId];
   let selectedTableInfo = null;
@@ -90,9 +90,9 @@ export default function BookingSidebar({
 
   return (
     <>
-      <form className="bg-card p-6 md:p-8 rounded-2xl border border-border shadow-sm flex flex-col h-full overflow-y-auto">
+      <form className="bg-card p-5 md:p-8 rounded-2xl border border-border shadow-sm flex flex-col h-full">
         {/* Grid: Fecha / Hora */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-1.5 text-gray-500">
               <Calendar className="w-4 h-4" /> Fecha
@@ -136,7 +136,7 @@ export default function BookingSidebar({
         </div>
 
         {/* Grid: Personas / Duración */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-1.5 text-gray-500">
               <Users className="w-4 h-4" /> Personas

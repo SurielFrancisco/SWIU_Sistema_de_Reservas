@@ -31,17 +31,17 @@ export default function HomeView() {
 
       {/* Hero Section */}
       <div className="pt-32 pb-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden flex flex-col items-center justify-center text-center">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-brand-primary/[0.03] rounded-full blur-3xl pointer-events-none" 
+          className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-brand-primary/[0.03] rounded-full blur-3xl pointer-events-none"
         />
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-          className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-brand-primary/[0.02] rounded-full blur-3xl pointer-events-none" 
+          className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-brand-primary/[0.02] rounded-full blur-3xl pointer-events-none"
         />
 
         <div className="max-w-4xl mx-auto relative z-10">
@@ -55,7 +55,7 @@ export default function HomeView() {
             Descubre experiencias gastronómicas
           </motion.div>
 
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.6 }}
@@ -64,7 +64,7 @@ export default function HomeView() {
             Encuentra tu mesa <br className="hidden md:block" />
             perfecta hoy.
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
@@ -72,8 +72,8 @@ export default function HomeView() {
           >
             Reserva al instante en los restaurantes más exclusivos de la ciudad. Sin llamadas, sin esperas.
           </motion.p>
-          
-          <motion.div 
+
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
@@ -85,10 +85,10 @@ export default function HomeView() {
               </div>
               <input
                 type="text"
-                className="flex-1 w-full h-14 bg-transparent text-brand-primary placeholder-gray-400 focus:outline-none text-lg"
-                placeholder="Restaurantes, tipo de comida, zonas..."
+                className="flex-1 w-full h-12 md:h-14 bg-transparent text-brand-primary placeholder-gray-400 focus:outline-none text-base md:text-lg min-w-0"
+                placeholder="Buscar restaurantes..."
               />
-              <button className="px-8 h-14 rounded-full text-white bg-brand-primary hover:bg-brand-primary/90 transition-colors font-medium text-lg flex items-center gap-2">
+              <button className="px-5 md:px-8 h-12 md:h-14 rounded-full text-white bg-brand-primary hover:bg-brand-primary/90 transition-colors font-medium text-base md:text-lg flex items-center gap-2 shrink-0">
                 Buscar
               </button>
             </div>
@@ -98,7 +98,7 @@ export default function HomeView() {
 
       {/* Recommended Section (Editorial Cards) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 mt-10">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -108,12 +108,12 @@ export default function HomeView() {
             Selecciones Premium
           </h2>
           <button className="text-sm font-medium text-gray-500 hover:text-brand-primary transition-colors flex items-center gap-1 group">
-            Ver todos 
+            Ver todos
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
         </motion.div>
-        
-        <motion.div 
+
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="show"
@@ -121,19 +121,19 @@ export default function HomeView() {
           className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12"
         >
           {RESTAURANTS_LIST.map((restaurant) => (
-            <motion.div 
+            <motion.div
               variants={itemVariants}
-              key={restaurant.id} 
+              key={restaurant.id}
               onClick={() => navigate(`/restaurant/${restaurant.id}`)}
               className="group relative rounded-[2rem] overflow-hidden cursor-pointer aspect-[4/3] md:aspect-[4/4] lg:aspect-[4/3] shadow-md hover:shadow-xl transition-all duration-500"
             >
               {/* Image Background */}
-              <img 
-                src={restaurant.image} 
-                alt={restaurant.name} 
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+              <img
+                src={restaurant.image}
+                alt={restaurant.name}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              
+
               {/* Gradient Overlay for text readability */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
 
@@ -160,7 +160,7 @@ export default function HomeView() {
                       {restaurant.location}
                     </div>
                   </div>
-                  
+
                   {/* Hover Arrow Indicator */}
                   <div className="w-12 h-12 rounded-full bg-white text-brand-primary flex items-center justify-center translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 shadow-lg">
                     <ArrowRight className="w-5 h-5 -rotate-45" />
