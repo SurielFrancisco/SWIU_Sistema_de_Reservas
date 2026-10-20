@@ -96,6 +96,12 @@ export default function ReservationsList() {
                             <Users className="w-4 h-4 text-gray-400" />
                             <span>{res.guests} personas</span>
                           </div>
+                          {res.paymentStatus === 'paid' && (
+                            <div className="flex items-center gap-3 text-sm text-emerald-700">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                              <span>Anticipo pagado · ${res.depositAmount} MXN</span>
+                            </div>
+                          )}
                           <div className="flex items-center gap-3 text-sm text-gray-600">
                             <MapPin className="w-4 h-4 text-gray-400" />
                             <span>Mesa {res.tableLabel}</span>

@@ -27,6 +27,14 @@ export const RESTAURANTS_LIST = [
   }
 ];
 
+// Cada restaurante decide si ofrece anticipo en línea. Por ahora solo Sushi Zen lo tiene habilitado.
+export const RESERVATION_PAYMENT_OPTIONS: Record<string, { restaurantName: string; deposit: number }> = {
+  'rest-2': {
+    restaurantName: 'Sushi Zen',
+    deposit: 200,
+  },
+};
+
 export const RESTAURANT_LAYOUTS: Record<string, RestaurantLayout> = {
   'rest-1': {
     id: 'rest-1',

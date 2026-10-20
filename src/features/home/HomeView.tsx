@@ -40,7 +40,11 @@ export default function HomeView() {
             <span className="hidden sm:inline">Mis Reservas</span>
           </button>
           
-          <button className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-white/50 backdrop-blur-md rounded-full border border-gray-200/50 hover:bg-white hover:shadow-md transition-all shadow-sm text-brand-primary">
+          <button
+            onClick={() => navigate('/login')}
+            aria-label="Iniciar sesión"
+            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-white/50 backdrop-blur-md rounded-full border border-gray-200/50 hover:bg-white hover:shadow-md transition-all shadow-sm text-brand-primary"
+          >
             <User className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>

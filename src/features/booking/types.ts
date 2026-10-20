@@ -35,6 +35,8 @@ export interface ReservationDetails {
   guests: number;
   customerName: string;
   status: 'upcoming' | 'completed' | 'cancelled';
+  paymentStatus?: 'paid' | 'not-paid';
+  depositAmount?: number;
 }
 
 export interface ReservationState {

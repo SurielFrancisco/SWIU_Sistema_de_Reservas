@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../../store";
-import { Calendar, Clock, Users, Check } from "lucide-react";
-import { RESTAURANT_LAYOUTS } from "../../mockData";
-import { setDateTime, selectTable, addReservation } from "../../store/bookingSlice";
-import BookingModal from "../BookingModal";
+import { Calendar, Clock, Users, Check, CheckCircle2 } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { RESERVATION_PAYMENT_OPTIONS, RESTAURANT_LAYOUTS } from "../../mockData";
+import { setDateTime, setGuests, selectTable, addReservation } from "../../store/bookingSlice";
+import LoginRequiredModal from "../LoginRequiredModal";
+import PaymentModal from "../PaymentModal";
 
 const getToday = () => {
   const today = new Date();
@@ -37,6 +39,9 @@ export default function BookingSidebar({
 }) {
   const dispatch = useDispatch();
   const bookingState = useSelector((state: RootState) => state.booking);
+  const auth = useSelector((state: RootState) => state.auth);
+  const location = useLocation();
+  const paymentOption = RESERVATION_PAYMENT_OPTIONS[restaurantId];
 
   // Find the selected table across all floors of the current restaurant
   const layout = RESTAURANT_LAYOUTS[restaurantId];
@@ -55,7 +60,10 @@ export default function BookingSidebar({
   const minimumTime =
     bookingState.date === today ? getCurrentTime() : undefined;
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [confirmedTable, setConfirmedTable] = useState<string | null>(null);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   const handleDateChange = (date: string) => {
     const time =
@@ -69,7 +77,7 @@ export default function BookingSidebar({
     dispatch(setDateTime({ date: bookingState.date, time }));
   };
 
-  const handleConfirmSuccess = (customerName: string) => {
+  const completeReservation = (wasPaid: boolean) => {
     if (bookingState.selectedTableId && selectedTableInfo) {
       const newReservation = {
         id: Math.random().toString(36).substr(2, 9),
@@ -78,14 +86,31 @@ export default function BookingSidebar({
         date: bookingState.date,
         time: bookingState.time,
         guests: bookingState.guests,
-        customerName: customerName,
+        customerName: auth.userName,
         status: 'upcoming' as const,
+        paymentStatus: paymentOption ? (wasPaid ? 'paid' as const : 'not-paid' as const) : undefined,
+        depositAmount: wasPaid ? paymentOption?.deposit : undefined,
       };
       dispatch(addReservation(newReservation));
+      setConfirmedTable(selectedTableInfo.label);
+      setPaymentConfirmed(wasPaid);
+      dispatch(selectTable(null));
     }
-    setIsModalOpen(false);
-    // Optionally reset state or navigate away
-    dispatch(selectTable(null));
+    setShowPaymentModal(false);
+  };
+
+  const handleReserve = () => {
+    if (!auth.isAuthenticated) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
+    if (paymentOption) {
+      setShowPaymentModal(true);
+      return;
+    }
+
+    completeReservation(false);
   };
 
   return (
@@ -142,7 +167,8 @@ export default function BookingSidebar({
               <Users className="w-4 h-4" /> Personas
             </label>
             <select
-              defaultValue={bookingState.guests}
+              value={bookingState.guests}
+              onChange={(event) => dispatch(setGuests(Number(event.target.value)))}
               className="w-full p-2.5 rounded-lg border border-border bg-brand-secondary focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-sm font-medium text-brand-primary outline-none"
             >
               {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
@@ -183,12 +209,24 @@ export default function BookingSidebar({
           </div>
         )}
 
+        {confirmedTable && (
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <p className="font-medium">Reserva confirmada</p>
+              <p className="mt-0.5 text-emerald-800">
+                La mesa {confirmedTable} ya aparece en tus reservas{paymentConfirmed ? ' y tu anticipo quedó registrado.' : '.'}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Submit */}
         <div className="mt-auto pt-4 flex flex-col gap-3">
           <button
             type="button"
             disabled={!selectedTableInfo}
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleReserve}
             className="w-full bg-brand-primary text-white py-3.5 rounded-xl font-medium text-sm hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
             Confirmar Reserva
@@ -202,17 +240,20 @@ export default function BookingSidebar({
         </div>
       </form>
 
-      <BookingModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        bookingDetails={{
-          date: bookingState.date,
-          time: bookingState.time,
-          guests: bookingState.guests,
-          tableLabel: selectedTableInfo?.label || "",
-        }}
-        onConfirmSuccess={handleConfirmSuccess}
+      <LoginRequiredModal
+        isOpen={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+        returnTo={location.pathname}
       />
+      {paymentOption && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          onComplete={completeReservation}
+          restaurantName={paymentOption.restaurantName}
+          deposit={paymentOption.deposit}
+        />
+      )}
     </>
   );
 }
