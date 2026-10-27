@@ -1,17 +1,32 @@
-import { useState } from 'react';
-import { RESTAURANT_LAYOUTS } from '../../mockData';
+import { useEffect, useState } from 'react';
+import { getRestaurantLayout } from '../repository';
 import Table from './Table';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAppDispatch } from '@/app/hooks';
+import { initializeDraft } from '@/features/reservations/store/reservationsSlice';
+import type { RestaurantLayout } from '../types';
 
 interface TableMapContainerProps {
-  restaurantId: string;
+  restaurantId?: string;
+  layout?: RestaurantLayout;
 }
 
-export default function TableMapContainer({ restaurantId }: TableMapContainerProps) {
-  const layout = RESTAURANT_LAYOUTS[restaurantId];
+export default function TableMapContainer({ restaurantId, layout: suppliedLayout }: TableMapContainerProps) {
+  const dispatch = useAppDispatch();
+  const layout = suppliedLayout ?? getRestaurantLayout(restaurantId);
 
   // Default to the first floor if available
-  const [activeFloorId, setActiveFloorId] = useState(layout?.floors[0]?.id || '');
+  const [selectedFloorId, setSelectedFloorId] = useState('');
+  const activeFloorId = layout?.floors.some((floor) => floor.id === selectedFloorId)
+    ? selectedFloorId
+    : (layout?.floors[0]?.id || '');
+
+  useEffect(() => {
+    const firstFloorId = layout?.floors[0]?.id;
+    if (restaurantId && firstFloorId) {
+      dispatch(initializeDraft({ restaurantId, floorId: activeFloorId }));
+    }
+  }, [activeFloorId, dispatch, layout, restaurantId]);
 
   if (!layout) {
     return (
@@ -32,7 +47,10 @@ export default function TableMapContainer({ restaurantId }: TableMapContainerPro
           {layout.floors.map(floor => (
             <button
               key={floor.id}
-              onClick={() => setActiveFloorId(floor.id)}
+            onClick={() => {
+              setSelectedFloorId(floor.id);
+              dispatch(initializeDraft({ restaurantId: restaurantId!, floorId: floor.id }));
+            }}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${activeFloorId === floor.id
                   ? 'bg-brand-primary text-white shadow-md'
                   : 'text-gray-500 hover:bg-gray-100 hover:text-brand-primary'
@@ -62,10 +80,27 @@ export default function TableMapContainer({ restaurantId }: TableMapContainerPro
             transition={{ duration: 0.3 }}
             className="absolute inset-0"
           >
+            {/* Áreas configuradas por el administrador */}
+            {activeFloor.areas?.map((area) => (
+              <div
+                key={area.id}
+                className="pointer-events-none absolute z-0 rounded-xl border border-dashed border-stone-300/80 p-3 font-serif text-xs font-medium text-stone-400"
+                style={{
+                  left: `${area.position.x}%`,
+                  top: `${area.position.y}%`,
+                  width: `${area.size.width}%`,
+                  height: `${area.size.height}%`,
+                  backgroundColor: area.color || '#f5f5f4',
+                }}
+              >
+                {area.name}
+              </div>
+            ))}
+
             {/* Mesas */}
             <div className="absolute inset-0 z-10">
               {activeFloor.tables.map(table => (
-                <Table key={table.id} table={table} />
+                <Table key={table.id} table={table} restaurantId={restaurantId!} floorId={activeFloor.id} />
               ))}
             </div>
 

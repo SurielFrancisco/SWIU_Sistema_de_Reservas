@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../../../store';
-import { cancelReservation } from '../store/bookingSlice';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { cancelReservation } from '../store/reservationsSlice';
 import { CalendarDays, Clock, Users, MapPin, XCircle, User, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ReservationsList() {
-  const dispatch = useDispatch();
-  const reservations = useSelector((state: RootState) => state.booking.reservations);
+  const dispatch = useAppDispatch();
+  const reservations = useAppSelector((state) => state.reservations.reservations);
 
   const [reservationToCancel, setReservationToCancel] = useState<string | null>(null);
 
@@ -24,24 +23,6 @@ export default function ReservationsList() {
       setReservationToCancel(null);
     }
   };
-
-  const EmptyState = () => (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center p-12 text-center bg-white rounded-3xl border border-gray-100 shadow-sm h-[60vh]"
-    >
-      <div className="w-24 h-24 bg-brand-secondary/50 rounded-full flex items-center justify-center mb-6">
-        <CalendarDays className="w-10 h-10 text-brand-primary/50" />
-      </div>
-      <h3 className="text-2xl font-serif font-medium text-gray-900 mb-2">
-        Aún no tienes reservas
-      </h3>
-      <p className="text-gray-500 max-w-sm">
-        Explora nuestro plano interactivo y encuentra la mesa perfecta para tu próxima visita.
-      </p>
-    </motion.div>
-  );
 
   return (
     <>
@@ -206,5 +187,21 @@ export default function ReservationsList() {
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+function EmptyState() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex h-[60vh] flex-col items-center justify-center rounded-3xl border border-gray-100 bg-white p-12 text-center shadow-sm"
+    >
+      <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-brand-secondary/50">
+        <CalendarDays className="h-10 w-10 text-brand-primary/50" />
+      </div>
+      <h3 className="mb-2 font-serif text-2xl font-medium text-gray-900">Aún no tienes reservas</h3>
+      <p className="max-w-sm text-gray-500">Explora nuestro plano interactivo y encuentra la mesa perfecta para tu próxima visita.</p>
+    </motion.div>
   );
 }

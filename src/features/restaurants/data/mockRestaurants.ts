@@ -1,4 +1,4 @@
-import { RestaurantLayout } from './types';
+import type { RestaurantLayout } from '../types';
 
 export const RESTAURANTS_LIST = [
   {

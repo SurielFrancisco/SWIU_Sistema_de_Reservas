@@ -1,26 +1,14 @@
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../../../store";
 import { Calendar, Clock, Users, Check, CheckCircle2 } from "lucide-react";
 import { useLocation } from "react-router-dom";
-import { RESERVATION_PAYMENT_OPTIONS, RESTAURANT_LAYOUTS } from "../../mockData";
-import { setDateTime, setGuests, selectTable, addReservation } from "../../store/bookingSlice";
-import LoginRequiredModal from "../LoginRequiredModal";
-import PaymentModal from "../PaymentModal";
-
-const getToday = () => {
-  const today = new Date();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  return `${today.getFullYear()}-${month}-${day}`;
-};
-
-const getCurrentTime = () => {
-  const now = new Date();
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
-};
+import { getPaymentOption, getRestaurantLayout } from "@/features/restaurants/repository";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { createId } from "@/lib/ids";
+import { getLocalDate, getLocalTime } from "@/lib/date";
+import { addReservation, selectTable, setDateTime, setDuration, setGuests } from "../store/reservationsSlice";
+import LoginRequiredModal from "./LoginRequiredModal";
+import PaymentModal from "./PaymentModal";
+import type { RestaurantLayout } from '@/features/restaurants/types';
 
 const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
   const hour24 = Math.floor(i / 2);
@@ -32,23 +20,25 @@ const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
   return { value, label };
 });
 
-export default function BookingSidebar({
+export default function BookingForm({
   restaurantId,
+  layout: suppliedLayout,
 }: {
-  restaurantId: string;
+  restaurantId?: string;
+  layout?: RestaurantLayout;
 }) {
-  const dispatch = useDispatch();
-  const bookingState = useSelector((state: RootState) => state.booking);
-  const auth = useSelector((state: RootState) => state.auth);
+  const dispatch = useAppDispatch();
+  const draft = useAppSelector((state) => state.reservations.draft);
+  const auth = useAppSelector((state) => state.auth);
   const location = useLocation();
-  const paymentOption = RESERVATION_PAYMENT_OPTIONS[restaurantId];
+  const paymentOption = getPaymentOption(restaurantId);
 
   // Find the selected table across all floors of the current restaurant
-  const layout = RESTAURANT_LAYOUTS[restaurantId];
+  const layout = suppliedLayout ?? getRestaurantLayout(restaurantId);
   let selectedTableInfo = null;
-  if (layout && bookingState.selectedTableId) {
+  if (layout && draft.selectedTableId) {
     for (const floor of layout.floors) {
-      const table = floor.tables.find(t => t.id === bookingState.selectedTableId);
+      const table = floor.tables.find(t => t.id === draft.selectedTableId);
       if (table) {
         selectedTableInfo = table;
         break;
@@ -56,9 +46,9 @@ export default function BookingSidebar({
     }
   }
 
-  const today = getToday();
+  const today = getLocalDate();
   const minimumTime =
-    bookingState.date === today ? getCurrentTime() : undefined;
+    draft.date === today ? getLocalTime() : undefined;
 
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -67,25 +57,28 @@ export default function BookingSidebar({
 
   const handleDateChange = (date: string) => {
     const time =
-      date === today && bookingState.time < getCurrentTime()
-        ? getCurrentTime()
-        : bookingState.time;
+      date === today && draft.time < getLocalTime()
+        ? getLocalTime()
+        : draft.time;
     dispatch(setDateTime({ date, time }));
   };
 
   const handleTimeChange = (time: string) => {
-    dispatch(setDateTime({ date: bookingState.date, time }));
+    dispatch(setDateTime({ date: draft.date, time }));
   };
 
   const completeReservation = (wasPaid: boolean) => {
-    if (bookingState.selectedTableId && selectedTableInfo) {
+    if (draft.selectedTableId && selectedTableInfo && draft.restaurantId && draft.floorId) {
       const newReservation = {
-        id: Math.random().toString(36).substr(2, 9),
-        tableId: bookingState.selectedTableId,
+        id: createId(),
+        restaurantId: draft.restaurantId,
+        floorId: draft.floorId,
+        tableId: draft.selectedTableId,
         tableLabel: selectedTableInfo.label,
-        date: bookingState.date,
-        time: bookingState.time,
-        guests: bookingState.guests,
+        date: draft.date,
+        time: draft.time,
+        durationMinutes: draft.durationMinutes,
+        guests: draft.guests,
         customerName: auth.userName,
         status: 'upcoming' as const,
         paymentStatus: paymentOption ? (wasPaid ? 'paid' as const : 'not-paid' as const) : undefined,
@@ -126,7 +119,7 @@ export default function BookingSidebar({
               type="date"
               required
               min={today}
-              value={bookingState.date}
+              value={draft.date}
               onChange={(event) => handleDateChange(event.target.value)}
               className="w-full p-2.5 rounded-lg border border-border bg-brand-secondary focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-sm font-medium text-brand-primary"
             />
@@ -137,7 +130,7 @@ export default function BookingSidebar({
             </label>
             <select
               required
-              value={bookingState.time}
+              value={draft.time}
               onChange={(event) => handleTimeChange(event.target.value)}
               className="w-full p-2.5 rounded-lg border border-border bg-brand-secondary focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-sm font-medium text-brand-primary outline-none cursor-pointer appearance-none"
               style={{
@@ -167,7 +160,7 @@ export default function BookingSidebar({
               <Users className="w-4 h-4" /> Personas
             </label>
             <select
-              value={bookingState.guests}
+              value={draft.guests}
               onChange={(event) => dispatch(setGuests(Number(event.target.value)))}
               className="w-full p-2.5 rounded-lg border border-border bg-brand-secondary focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-sm font-medium text-brand-primary outline-none"
             >
@@ -183,14 +176,15 @@ export default function BookingSidebar({
               <Clock className="w-4 h-4" /> Duración
             </label>
             <select
-              defaultValue="2 horas"
+              value={draft.durationMinutes}
+              onChange={(event) => dispatch(setDuration(Number(event.target.value)))}
               className="w-full p-2.5 rounded-lg border border-border bg-brand-secondary focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-sm font-medium text-brand-primary outline-none"
             >
-              <option value="30 minutos">30 minutos</option>
-              <option value="1 hora">1 hora</option>
-              <option value="1.5 horas">1.5 horas</option>
-              <option value="2 horas">2 horas</option>
-              <option value="3 horas">3 horas</option>
+              <option value={30}>30 minutos</option>
+              <option value={60}>1 hora</option>
+              <option value={90}>1.5 horas</option>
+              <option value={120}>2 horas</option>
+              <option value={180}>3 horas</option>
             </select>
           </div>
         </div>
@@ -233,6 +227,7 @@ export default function BookingSidebar({
           </button>
           <button
             type="button"
+            onClick={() => dispatch(selectTable(null))}
             className="w-full py-3.5 rounded-xl font-medium text-sm text-gray-500 hover:bg-brand-secondary transition-colors"
           >
             Cancelar

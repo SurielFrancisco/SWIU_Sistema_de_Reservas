@@ -1,10 +1,11 @@
-import { TableInfo } from '../../types';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../../../store';
+import type { TableInfo } from '../types';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { Users } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { selectTable } from '@/features/reservations/store/reservationsSlice';
+import { isTableReserved } from '@/features/reservations/selectors';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -12,19 +13,29 @@ function cn(...inputs: ClassValue[]) {
 
 interface TableProps {
   table: TableInfo;
+  restaurantId: string;
+  floorId: string;
 }
 
-export default function Table({ table }: TableProps) {
-  const dispatch = useDispatch();
-  const selectedTableId = useSelector((state: RootState) => state.booking.selectedTableId);
-  const reservations = useSelector((state: RootState) => state.booking.reservations);
+export default function Table({ table, restaurantId, floorId }: TableProps) {
+  const dispatch = useAppDispatch();
+  const draft = useAppSelector((state) => state.reservations.draft);
+  const reservations = useAppSelector((state) => state.reservations.reservations);
+  const selectedTableId = draft.selectedTableId;
   const isSelected = selectedTableId === table.id;
   
-  const effectiveStatus = reservations.some(r => r.tableId === table.id && r.status === 'upcoming') ? 'occupied' : table.status;
+  const effectiveStatus = isTableReserved(reservations, {
+    restaurantId,
+    floorId,
+    tableId: table.id,
+    date: draft.date,
+    time: draft.time,
+    durationMinutes: draft.durationMinutes,
+  }) ? 'occupied' : table.status;
 
   const handleSelect = () => {
     if (effectiveStatus === 'available') {
-      dispatch({ type: 'booking/selectTable', payload: isSelected ? null : table.id });
+      dispatch(selectTable(isSelected ? null : table.id));
     }
   };
 

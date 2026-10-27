@@ -2,21 +2,22 @@ import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, Mail, UtensilsCrossed } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { RESTAURANTS_LIST } from '../booking/mockData';
-import { useDispatch } from 'react-redux';
+import { RESTAURANTS_LIST } from '../restaurants/repository';
+import { useAppDispatch } from '@/app/hooks';
 import { signIn } from './store/authSlice';
 
 export default function LoginView() {
   const navigate = useNavigate();
   const location = useLocation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
+  const [role, setRole] = useState<'customer' | 'admin'>('customer');
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    dispatch(signIn({ email }));
-    const returnTo = (location.state as { returnTo?: string } | null)?.returnTo || '/';
+    dispatch(signIn({ email, role }));
+    const returnTo = (location.state as { returnTo?: string } | null)?.returnTo || (role === 'admin' ? '/admin' : '/');
     navigate(returnTo, { replace: true });
   }
 
@@ -130,6 +131,14 @@ export default function LoginView() {
               <input type="checkbox" className="h-4 w-4 rounded border-gray-300 accent-brand-primary" />
               Recordarme en este dispositivo
             </label>
+
+            <fieldset className="rounded-2xl border border-gray-200 bg-white p-3">
+              <legend className="px-1 text-sm font-medium text-gray-700">Acceso de demostración</legend>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setRole('customer')} className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${role === 'customer' ? 'bg-brand-primary text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>Cliente</button>
+                <button type="button" onClick={() => setRole('admin')} className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${role === 'admin' ? 'bg-brand-primary text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>Administrador</button>
+              </div>
+            </fieldset>
 
             <button
               type="submit"

@@ -1,13 +1,15 @@
 import { UtensilsCrossed, UserCircle, Map as MapIcon, Calendar as CalendarIcon } from 'lucide-react';
 import { useParams, Link } from 'react-router-dom';
-import TableMapContainer from './components/TableMap/TableMapContainer';
-import BookingSidebar from './components/BookingSidebar/BookingSidebar';
-import ReservationsList from './components/ReservationsList';
+import TableMapContainer from '../restaurants/components/TableMapContainer';
+import BookingForm from '../reservations/components/BookingForm';
+import ReservationsList from '../reservations/components/ReservationsList';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { useAppSelector } from '@/app/hooks';
 
 export default function BookingView() {
   const { id } = useParams();
+  const managedLayout = useAppSelector((state) => state.admin.restaurants.find((restaurant) => restaurant.id === id)?.layout);
   const [activeTab, setActiveTab] = useState<'mapa' | 'reservas'>('mapa');
   const [role, setRole] = useState<'cliente' | 'recepcionista'>('cliente');
 
@@ -28,7 +30,7 @@ export default function BookingView() {
             <select
               className="bg-brand-secondary text-xs border-0 rounded p-1.5 focus:ring-2 focus:ring-brand-primary outline-none"
               value={role}
-              onChange={(e) => setRole(e.target.value as any)}
+              onChange={(e) => setRole(e.target.value as 'cliente' | 'recepcionista')}
             >
               <option value="cliente">Cliente</option>
               <option value="recepcionista">Recep.</option>
@@ -102,7 +104,7 @@ export default function BookingView() {
           <select
             className="w-full bg-brand-secondary text-sm border-0 rounded-md p-2.5 focus:ring-2 focus:ring-brand-primary cursor-pointer outline-none"
             value={role}
-            onChange={(e) => setRole(e.target.value as any)}
+              onChange={(e) => setRole(e.target.value as 'cliente' | 'recepcionista')}
           >
             <option value="cliente">Cliente</option>
             <option value="recepcionista">Recepcionista</option>
@@ -154,13 +156,13 @@ export default function BookingView() {
                   
                   {/* The overflow-auto allows the map to be scrolled horizontally on mobile */}
                   <div className="flex-1 relative overflow-auto p-4 md:p-6 bg-brand-secondary/30">
-                     <TableMapContainer restaurantId={id!} />
+                     <TableMapContainer restaurantId={id} layout={managedLayout} />
                   </div>
                 </div>
 
                 {/* Form Column */}
                 <div className="w-full lg:w-[420px] flex-shrink-0">
-                  <BookingSidebar restaurantId={id!} />
+                  <BookingForm restaurantId={id} layout={managedLayout} />
                 </div>
               </div>
             </motion.div>

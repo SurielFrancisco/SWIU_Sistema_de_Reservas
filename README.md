@@ -15,7 +15,7 @@ SDReservas es una aplicación web moderna e interactiva enfocada en la gestión 
 
 Este proyecto fue construido utilizando los estándares y herramientas más modernas del ecosistema Frontend:
 
-* **React 18** (Vite)
+* **React 19** (Vite)
 * **TypeScript** para un código seguro y escalable.
 * **Tailwind CSS** para los estilos rápidos, responsivos y de alto nivel visual.
 * **Framer Motion** para las micro-interacciones, animaciones de mapas y transiciones de los Slide-Overs.
@@ -46,5 +46,15 @@ Una vez que el servidor inicie, abre `http://localhost:5173` en tu navegador.
 ## Navegación de la Aplicación
 
 - **`/` (HomeView):** Pantalla principal. Muestra el buscador, tarjetas visuales de los restaurantes premium disponibles, acceso al panel lateral de "Mis Reservas" y el perfil de usuario.
-- **`/restaurant/:id` (BookingView):** Pantalla de reservación específica. Incluye el mapa interactivo de mesas (`TableMapContainer`), el selector de pisos y el formulario para confirmar la reservación (`BookingSidebar`).
+- **`/restaurant/:id` (BookingView):** Pantalla de reservación específica. Incluye el mapa interactivo de mesas (`TableMapContainer`), el selector de pisos y el formulario para confirmar la reservación (`BookingForm`).
+
+## Organización del código
+
+- **`app/`**: configuración de Redux, persistencia local y hooks tipados.
+- **`features/restaurants/`**: catálogo, planos y reglas de pago de restaurantes.
+- **`features/reservations/`**: borrador de reserva, disponibilidad, componentes y estado de reservas.
+- **`features/auth/`**: estado y pantallas de autenticación.
+- **`lib/`**: utilidades compartidas para fechas e identificadores.
+
+Las reservas se guardan localmente en el navegador para que el estado de sesión y el historial no se pierdan al recargar. Cada reserva conserva el restaurante, piso, mesa, fecha, hora y duración; la disponibilidad se calcula dentro de ese contexto.
 

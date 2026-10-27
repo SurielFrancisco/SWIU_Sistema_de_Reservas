@@ -1,9 +1,10 @@
 import { UtensilsCrossed, ArrowRight, Search, Star, MapPin, Calendar as CalendarIcon, X, Utensils, User } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RESTAURANTS_LIST } from '../booking/mockData';
+import { RESTAURANTS_LIST } from '../restaurants/repository';
 import { useState } from 'react';
-import ReservationsList from '../booking/components/ReservationsList';
+import ReservationsList from '../reservations/components/ReservationsList';
+import { useAppSelector } from '@/app/hooks';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -18,12 +19,21 @@ const itemVariants = {
   show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } }
 };
 
-export default function HomeView() {
+export default function HomeView({ preview = false }: { preview?: boolean }) {
   const navigate = useNavigate();
   const [showReservations, setShowReservations] = useState(false);
+  const auth = useAppSelector((state) => state.auth);
+  const managedRestaurants = useAppSelector((state) => state.admin.restaurants.filter((restaurant) => restaurant.status === 'published'));
+  const restaurants = [...RESTAURANTS_LIST, ...managedRestaurants];
 
   return (
     <div className="min-h-screen bg-brand-secondary text-brand-primary selection:bg-brand-primary/10 pb-24 relative overflow-hidden">
+      {preview && (
+        <div className="fixed inset-x-0 top-0 z-[60] flex items-center justify-center gap-3 bg-brand-primary px-4 py-2 text-center text-xs font-medium text-white shadow-lg">
+          Vista previa del cliente
+          <Link to="/admin" className="rounded-full bg-white/15 px-3 py-1 transition-colors hover:bg-white/25">Volver a administración</Link>
+        </div>
+      )}
       {/* Top Navigation / Logo */}
       <nav className="absolute top-0 left-0 right-0 z-50 px-6 py-6 md:px-12 md:py-8 flex items-center justify-between pointer-events-none">
         <div className="pointer-events-auto flex items-center gap-2 text-brand-primary cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.scrollTo(0, 0)}>
@@ -41,8 +51,8 @@ export default function HomeView() {
           </button>
           
           <button
-            onClick={() => navigate('/login')}
-            aria-label="Iniciar sesión"
+            onClick={() => navigate(auth.role === 'admin' ? '/admin' : '/login')}
+            aria-label={auth.role === 'admin' ? 'Ir a administración' : 'Iniciar sesión'}
             className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-white/50 backdrop-blur-md rounded-full border border-gray-200/50 hover:bg-white hover:shadow-md transition-all shadow-sm text-brand-primary"
           >
             <User className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -141,7 +151,7 @@ export default function HomeView() {
           viewport={{ once: true, margin: "-100px" }}
           className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12"
         >
-          {RESTAURANTS_LIST.map((restaurant) => (
+          {restaurants.map((restaurant) => (
             <motion.div
               variants={itemVariants}
               key={restaurant.id}
