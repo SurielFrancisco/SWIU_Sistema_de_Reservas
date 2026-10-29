@@ -80,7 +80,7 @@ export default function Table({ table, restaurantId, floorId }: TableProps) {
         disabled={effectiveStatus !== 'available'}
         onClick={handleSelect}
         className={cn(
-          'flex flex-col items-center justify-center border-2 transition-all duration-200 relative outline-none focus:ring-2 focus:ring-brand-primary/30',
+          'flex flex-col items-center justify-center border-2 transition-all duration-200 relative outline-none focus-visible:ring-4 focus-visible:ring-brand-primary/40',
           shapeClasses,
           statusClasses
         )}
@@ -89,7 +89,7 @@ export default function Table({ table, restaurantId, floorId }: TableProps) {
           {table.label.replace(/^[A-Z]-/, '')}
         </span>
         <span className="text-[10px] md:text-xs mt-0.5 flex items-center gap-1 opacity-70 font-sans">
-          <Users className="w-3 h-3" /> {table.capacity}
+          <Users aria-hidden="true" className="w-3 h-3" /> {table.capacity}
         </span>
         
         {/* Chair Indicators */}

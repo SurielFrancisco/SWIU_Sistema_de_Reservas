@@ -39,11 +39,11 @@ export default function TableMapContainer({ restaurantId, layout: suppliedLayout
   const activeFloor = layout.floors.find(f => f.id === activeFloorId) || layout.floors[0];
 
   return (
-    <div className="w-[800px] h-[600px] md:w-full md:h-[600px] relative flex shrink-0">
+    <section aria-label="Plano de mesas del restaurante" className="w-[800px] h-[600px] md:w-full md:h-[600px] relative flex shrink-0">
 
       {/* Floor Selector (Only visible if > 1 floor) */}
       {layout.floors.length > 1 && (
-        <div className="absolute top-4 left-4 z-50 bg-white/90 backdrop-blur-md rounded-xl p-1.5 shadow-sm border border-gray-100 flex flex-col gap-1">
+        <div role="group" aria-label="Seleccionar piso" className="absolute top-4 left-4 z-50 bg-white/90 backdrop-blur-md rounded-xl p-1.5 shadow-sm border border-gray-100 flex flex-col gap-1">
           {layout.floors.map(floor => (
             <button
               key={floor.id}
@@ -118,6 +118,6 @@ export default function TableMapContainer({ restaurantId, layout: suppliedLayout
           </motion.div>
         </AnimatePresence>
       </div>
-    </div>
+    </section>
   );
 }

@@ -2,9 +2,10 @@ import { UtensilsCrossed, ArrowRight, Search, Star, MapPin, Calendar as Calendar
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RESTAURANTS_LIST } from '../restaurants/repository';
-import { useState } from 'react';
-import ReservationsList from '../reservations/components/ReservationsList';
+import { lazy, Suspense, useState } from 'react';
 import { useAppSelector } from '@/app/hooks';
+
+const ReservationsList = lazy(() => import('../reservations/components/ReservationsList'));
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -151,17 +152,23 @@ export default function HomeView({ preview = false }: { preview?: boolean }) {
           viewport={{ once: true, margin: "-100px" }}
           className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12"
         >
-          {restaurants.map((restaurant) => (
+          {restaurants.map((restaurant, index) => (
+            <Link
+              key={restaurant.id}
+              to={`/restaurant/${restaurant.id}`}
+              className="block rounded-[2rem] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-primary/40"
+            >
             <motion.div
               variants={itemVariants}
-              key={restaurant.id}
-              onClick={() => navigate(`/restaurant/${restaurant.id}`)}
-              className="group relative rounded-[2rem] overflow-hidden cursor-pointer aspect-[4/3] md:aspect-[4/4] lg:aspect-[4/3] shadow-md hover:shadow-xl transition-all duration-500"
+              className="group relative rounded-[2rem] overflow-hidden aspect-[4/3] md:aspect-[4/4] lg:aspect-[4/3] shadow-md hover:shadow-xl transition-all duration-500"
             >
               {/* Image Background */}
               <img
                 src={restaurant.image}
                 alt={restaurant.name}
+                loading={index === 0 ? 'eager' : 'lazy'}
+                fetchPriority={index === 0 ? 'high' : 'auto'}
+                decoding="async"
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
 
@@ -199,6 +206,7 @@ export default function HomeView({ preview = false }: { preview?: boolean }) {
                 </div>
               </div>
             </motion.div>
+            </Link>
           ))}
         </motion.div>
       </div>
@@ -234,7 +242,9 @@ export default function HomeView({ preview = false }: { preview?: boolean }) {
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto">
-                <ReservationsList />
+                <Suspense fallback={<div className="p-6 text-sm text-gray-500">Cargando reservas...</div>}>
+                  <ReservationsList />
+                </Suspense>
               </div>
             </motion.div>
           </div>

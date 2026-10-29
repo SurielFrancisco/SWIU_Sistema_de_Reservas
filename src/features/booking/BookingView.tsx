@@ -141,15 +141,21 @@ export default function BookingView() {
                     <h3 className="font-medium text-brand-primary text-sm">
                       Plano del Restaurante
                     </h3>
-                    <div className="flex flex-wrap gap-3 md:gap-4 text-[11px] md:text-xs font-medium text-gray-500">
+                    <div aria-label="Estados de las mesas" className="flex flex-wrap gap-3 md:gap-4 text-[11px] md:text-xs font-medium text-gray-600">
                       <span className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 bg-white border border-border rounded-sm shadow-sm" /> Disponible
+                        <span aria-hidden="true" className="font-bold text-brand-primary">○</span> Disponible
                       </span>
                       <span className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 bg-brand-primary border border-brand-primary rounded-sm" /> Seleccionada
+                        <span aria-hidden="true" className="font-bold text-brand-primary">✓</span> Seleccionada
                       </span>
                       <span className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 bg-[#F5F5F5] border border-border rounded-sm" /> Ocupada
+                        <span aria-hidden="true" className="font-bold text-gray-500">×</span> Ocupada
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span aria-hidden="true" className="font-bold text-blue-700">◷</span> Reservada
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span aria-hidden="true" className="font-bold text-red-700">—</span> Fuera de servicio
                       </span>
                     </div>
                   </div>

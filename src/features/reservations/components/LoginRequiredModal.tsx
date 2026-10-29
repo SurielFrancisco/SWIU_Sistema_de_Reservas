@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, LockKeyhole, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +11,22 @@ interface LoginRequiredModalProps {
 
 export default function LoginRequiredModal({ isOpen, onClose, returnTo }: LoginRequiredModalProps) {
   const navigate = useNavigate();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    closeButtonRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previousFocusRef.current?.focus();
+    };
+  }, [isOpen, onClose]);
 
   return (
     <AnimatePresence>
@@ -34,6 +51,7 @@ export default function LoginRequiredModal({ isOpen, onClose, returnTo }: LoginR
           >
             <button
               type="button"
+              ref={closeButtonRef}
               onClick={onClose}
               aria-label="Cerrar aviso"
               className="absolute right-5 top-5 rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-brand-primary"

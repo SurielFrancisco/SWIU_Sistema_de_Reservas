@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, CreditCard, LockKeyhole, ShieldCheck, X } from 'lucide-react';
 
@@ -19,22 +19,42 @@ export default function PaymentModal({
 }: PaymentModalProps) {
   const [step, setStep] = useState<'offer' | 'card'>('offer');
   const [isProcessing, setIsProcessing] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const isProcessingRef = useRef(false);
 
-  const closePayment = () => {
+  const closePayment = useCallback(() => {
     setStep('offer');
     setIsProcessing(false);
+    isProcessingRef.current = false;
     onClose();
-  };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    closeButtonRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !isProcessingRef.current) closePayment();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previousFocusRef.current?.focus();
+    };
+  }, [isOpen, closePayment]);
 
   const completePayment = (wasPaid: boolean) => {
     setStep('offer');
     setIsProcessing(false);
+    isProcessingRef.current = false;
     onComplete(wasPaid);
   };
 
   const handlePayment = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsProcessing(true);
+    isProcessingRef.current = true;
     window.setTimeout(() => {
       setIsProcessing(false);
       completePayment(true);
@@ -64,6 +84,7 @@ export default function PaymentModal({
           >
             <button
               type="button"
+              ref={closeButtonRef}
               onClick={closePayment}
               disabled={isProcessing}
               aria-label="Cerrar pago"

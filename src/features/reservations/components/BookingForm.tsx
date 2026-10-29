@@ -112,10 +112,11 @@ export default function BookingForm({
         {/* Grid: Fecha / Hora */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-1.5 text-gray-500">
+            <label htmlFor="booking-date" className="text-sm font-medium flex items-center gap-1.5 text-gray-500">
               <Calendar className="w-4 h-4" /> Fecha
             </label>
             <input
+              id="booking-date"
               type="date"
               required
               min={today}
@@ -125,10 +126,11 @@ export default function BookingForm({
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-1.5 text-gray-500">
+            <label htmlFor="booking-time" className="text-sm font-medium flex items-center gap-1.5 text-gray-500">
               <Clock className="w-4 h-4" /> Hora
             </label>
             <select
+              id="booking-time"
               required
               value={draft.time}
               onChange={(event) => handleTimeChange(event.target.value)}
@@ -156,10 +158,11 @@ export default function BookingForm({
         {/* Grid: Personas / Duración */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-1.5 text-gray-500">
+            <label htmlFor="booking-guests" className="text-sm font-medium flex items-center gap-1.5 text-gray-500">
               <Users className="w-4 h-4" /> Personas
             </label>
             <select
+              id="booking-guests"
               value={draft.guests}
               onChange={(event) => dispatch(setGuests(Number(event.target.value)))}
               className="w-full p-2.5 rounded-lg border border-border bg-brand-secondary focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-sm font-medium text-brand-primary outline-none"
@@ -172,10 +175,11 @@ export default function BookingForm({
             </select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-1.5 text-gray-500">
+            <label htmlFor="booking-duration" className="text-sm font-medium flex items-center gap-1.5 text-gray-500">
               <Clock className="w-4 h-4" /> Duración
             </label>
             <select
+              id="booking-duration"
               value={draft.durationMinutes}
               onChange={(event) => dispatch(setDuration(Number(event.target.value)))}
               className="w-full p-2.5 rounded-lg border border-border bg-brand-secondary focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-sm font-medium text-brand-primary outline-none"
@@ -192,7 +196,7 @@ export default function BookingForm({
         {/* Selected Table Indicator */}
         {!selectedTableInfo && (
           <div className="mb-6 p-4 bg-brand-secondary text-gray-500 border border-border rounded-xl text-sm font-medium text-center">
-            Por favor, selecciona una mesa en el plano.
+            <span role="status">Por favor, selecciona una mesa en el plano.</span>
           </div>
         )}
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { cancelReservation } from '../store/reservationsSlice';
 import { CalendarDays, Clock, Users, MapPin, XCircle, User, CheckCircle2, AlertTriangle } from 'lucide-react';
@@ -9,6 +9,8 @@ export default function ReservationsList() {
   const reservations = useAppSelector((state) => state.reservations.reservations);
 
   const [reservationToCancel, setReservationToCancel] = useState<string | null>(null);
+  const cancelDialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const upcomingReservations = reservations.filter(r => r.status === 'upcoming');
   const pastOrCancelled = reservations.filter(r => r.status !== 'upcoming');
@@ -23,6 +25,20 @@ export default function ReservationsList() {
       setReservationToCancel(null);
     }
   };
+
+  useEffect(() => {
+    if (!reservationToCancel) return;
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    cancelDialogRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setReservationToCancel(null);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previousFocusRef.current?.focus();
+    };
+  }, [reservationToCancel]);
 
   return (
     <>
@@ -92,7 +108,7 @@ export default function ReservationsList() {
                         <div className="flex gap-3">
                           <button 
                             onClick={() => handleCancel(res.id)}
-                            className="flex-1 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-transparent hover:border-red-100"
+                            className="flex-1 py-3 px-4 rounded-xl font-medium text-sm text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm"
                           >
                             Cancelar Reserva
                           </button>
@@ -156,12 +172,17 @@ export default function ReservationsList() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              ref={cancelDialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="cancel-reservation-title"
+              tabIndex={-1}
               className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 md:p-8 text-center"
             >
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertTriangle className="w-8 h-8 text-red-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
+              <h2 id="cancel-reservation-title" className="text-xl font-bold text-gray-900 mb-2">
                 ¿Cancelar Reserva?
               </h2>
               <p className="text-gray-500 mb-8 text-sm">
