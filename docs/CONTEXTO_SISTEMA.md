@@ -2,6 +2,10 @@
 
 > Documento de referencia técnica y funcional del estado actual del repositorio. Actualizado a partir del código fuente, no de un backend desplegado.
 
+> [!IMPORTANT]
+> **Toda modificación al sistema debe registrarse en [`CHANGELOG.md`](./CHANGELOG.md).**
+> Agrega una fila a la tabla con la fecha, tipo de cambio (`feat`, `fix`, `refactor`, `docs`, `style`, `chore`), área afectada, descripción breve y archivos clave. Consulta ese archivo para ver las instrucciones completas.
+
 ## 1. Propósito
 
 **SDReservas** es una aplicación web de demostración para descubrir restaurantes y reservar mesas desde un plano interactivo. La propuesta central es permitir que una persona seleccione fecha, hora, número de comensales, duración y una mesa específica dentro de la distribución del restaurante.
