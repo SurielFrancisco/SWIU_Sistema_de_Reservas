@@ -18,10 +18,10 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    signIn: (state, action: PayloadAction<{ email: string; role?: AuthState['role'] }>) => {
+    signIn: (state, action: PayloadAction<{ email: string; role?: AuthState['role']; userName?: string }>) => {
       state.isAuthenticated = true;
       state.email = action.payload.email;
-      state.userName = action.payload.email.split('@')[0] || 'Cliente';
+      state.userName = action.payload.userName || action.payload.email.split('@')[0] || 'Cliente';
       state.role = action.payload.role || 'customer';
     },
     signOut: (state) => {

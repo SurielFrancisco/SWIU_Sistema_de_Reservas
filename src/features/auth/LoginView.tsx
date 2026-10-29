@@ -12,12 +12,11 @@ export default function LoginView() {
   const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'customer' | 'admin'>('customer');
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    dispatch(signIn({ email, role }));
-    const returnTo = (location.state as { returnTo?: string } | null)?.returnTo || (role === 'admin' ? '/admin' : '/');
+    dispatch(signIn({ email, role: 'customer' }));
+    const returnTo = (location.state as { returnTo?: string } | null)?.returnTo || '/';
     navigate(returnTo, { replace: true });
   }
 
@@ -27,19 +26,19 @@ export default function LoginView() {
         <img
           src={RESTAURANTS_LIST[0].image}
           alt="Mesa preparada en un restaurante"
+          fetchPriority="high"
+          decoding="async"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-black/20" />
         <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-white/15 blur-3xl" />
 
-        <Link
-          to="/"
-          className="relative z-10 m-8 flex w-fit items-center gap-2 text-white transition-opacity hover:opacity-80"
-          aria-label="Volver al inicio"
+        <div
+          className="relative z-10 m-8 flex w-fit items-center gap-2 text-white"
         >
           <UtensilsCrossed className="h-8 w-8" />
           <span className="font-serif text-2xl font-bold tracking-tight">SDReservas</span>
-        </Link>
+        </div>
 
         <div className="relative z-10 max-w-xl px-12 pb-14 text-white">
           <p className="mb-5 inline-flex rounded-full border border-white/30 bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm">
@@ -75,7 +74,7 @@ export default function LoginView() {
           </div>
 
           <div className="mb-8">
-            <p className="mb-3 text-sm font-medium text-gray-500">BIENVENIDO DE NUEVO</p>
+            <p className="mb-3 text-sm font-medium text-gray-500">BIENVENIDO</p>
             <h1 className="font-serif text-4xl font-medium tracking-tight sm:text-5xl">Inicia sesión</h1>
             <p className="mt-4 text-base leading-relaxed text-gray-500">
               Accede para gestionar tus reservas y descubrir nuevos sabores.
@@ -132,14 +131,6 @@ export default function LoginView() {
               Recordarme en este dispositivo
             </label>
 
-            <fieldset className="rounded-2xl border border-gray-200 bg-white p-3">
-              <legend className="px-1 text-sm font-medium text-gray-700">Acceso de demostración</legend>
-              <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => setRole('customer')} className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${role === 'customer' ? 'bg-brand-primary text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>Cliente</button>
-                <button type="button" onClick={() => setRole('admin')} className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${role === 'admin' ? 'bg-brand-primary text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>Administrador</button>
-              </div>
-            </fieldset>
-
             <button
               type="submit"
               className="group flex h-14 w-full items-center justify-center gap-2 rounded-full bg-brand-primary px-6 font-medium text-white shadow-lg shadow-gray-300/40 transition-all hover:-translate-y-0.5 hover:bg-brand-primary/90 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-gray-300"
@@ -151,9 +142,22 @@ export default function LoginView() {
 
           <p className="mt-8 text-center text-sm text-gray-500">
             ¿Aún no tienes una cuenta?{' '}
-            <button type="button" className="font-medium text-brand-primary underline decoration-gray-300 underline-offset-4 transition-colors hover:decoration-brand-primary">
+            <Link
+              to="/register"
+              className="font-medium text-brand-primary underline decoration-gray-300 underline-offset-4 transition-colors hover:decoration-brand-primary"
+            >
               Crea una cuenta
-            </button>
+            </Link>
+          </p>
+
+          <p className="mt-8 text-center text-sm text-gray-500">
+            ¿Tienes un restaurante?{' '}
+            <Link
+              to="/login/admin"
+              className="font-medium text-brand-primary underline decoration-gray-300 underline-offset-4 transition-colors hover:decoration-brand-primary"
+            >
+              Accede como administrador
+            </Link>
           </p>
         </motion.div>
       </section>
