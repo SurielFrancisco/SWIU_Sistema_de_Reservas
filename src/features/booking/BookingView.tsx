@@ -160,8 +160,8 @@ export default function BookingView() {
                     </div>
                   </div>
                   
-                  {/* The overflow-auto allows the map to be scrolled horizontally on mobile */}
-                  <div className="flex-1 relative overflow-auto p-4 md:p-6 bg-brand-secondary/30">
+                  {/* Container for the table map with zoom and full-view adaptation */}
+                  <div className="flex-1 relative overflow-hidden p-2 sm:p-4 md:p-6 bg-brand-secondary/30 min-h-[420px] md:min-h-[560px]">
                      <TableMapContainer restaurantId={id} layout={managedLayout} />
                   </div>
                 </div>

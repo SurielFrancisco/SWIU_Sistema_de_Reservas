@@ -24,9 +24,9 @@ const statusLabel: Record<TableStatus, string> = {
 };
 
 const statusStyle: Record<TableStatus, string> = {
-  available: 'border-emerald-300 bg-emerald-50 text-emerald-800',
+  available: 'border-stone-200 bg-white text-brand-primary',
   reserved: 'border-blue-300 bg-blue-50 text-blue-800',
-  occupied: 'border-amber-300 bg-amber-50 text-amber-800',
+  occupied: 'border-stone-200 bg-stone-100 text-stone-500',
   'out-of-service': 'border-red-300 bg-red-50 text-red-700',
 };
 
@@ -117,10 +117,10 @@ export default function WaiterView() {
             </Link>
             <div>
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-800">
-                  Consola de Mesero
+                <span className="rounded-full bg-brand-secondary px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-gray-600">
+                  Operación de salón
                 </span>
-                <span className="text-xs text-gray-400">· Vista Administrador</span>
+                <span className="text-xs text-gray-400">· Mesero</span>
               </div>
               <h1 className="font-serif text-2xl font-bold">{restaurant.name}</h1>
             </div>
@@ -133,7 +133,7 @@ export default function WaiterView() {
             </div>
             <Link
               to={`/recepcion/${restaurant.id}`}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 sm:text-sm"
+              className="rounded-xl border border-border px-3 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-brand-secondary sm:text-sm"
             >
               Ir a recepción
             </Link>
@@ -189,10 +189,10 @@ export default function WaiterView() {
         {/* Layout en dos columnas: plano de mesas y panel de acciones */}
         <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
           {/* Plano de mesas interactivo */}
-          <section className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+          <section className="rounded-[1.5rem] border border-border bg-white p-4 shadow-sm md:p-5">
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="font-serif text-xl font-medium">Plano del salón</h2>
+                <h2 className="font-serif text-xl">Plano del salón</h2>
                 <p className="text-xs text-gray-500">
                   Toca una mesa para gestionarla según las facultades de mesero.
                 </p>
@@ -224,9 +224,9 @@ export default function WaiterView() {
 
             {/* Lienzo visual del plano */}
             <div
-              className="relative h-[560px] overflow-hidden rounded-xl border border-gray-200 bg-stone-50"
+              className="relative h-[460px] overflow-hidden rounded-2xl border border-border bg-brand-secondary md:h-[560px]"
               style={{
-                backgroundImage: 'radial-gradient(#d6d3d1 1px, transparent 1px)',
+                backgroundImage: 'radial-gradient(#e5e5e5 1px, transparent 1px)',
                 backgroundSize: '22px 22px',
               }}
             >
@@ -234,7 +234,7 @@ export default function WaiterView() {
               {floor.areas?.map((area) => (
                 <div
                   key={area.id}
-                  className="pointer-events-none absolute rounded-xl border border-dashed border-stone-300 p-3 font-serif text-xs font-medium text-stone-500"
+                  className="pointer-events-none absolute rounded-xl border border-dashed border-stone-300 p-3 font-serif text-xs text-stone-400"
                   style={{
                     left: `${area.position.x}%`,
                     top: `${area.position.y}%`,
@@ -286,12 +286,12 @@ export default function WaiterView() {
 
           {/* Panel lateral con las acciones de mesero */}
           <aside className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-            <h2 className="font-serif text-xl font-medium">Control de mesa</h2>
+            <h2 className="font-serif text-xl">Control de mesa</h2>
 
             {currentSelectedTable ? (
               <div className="mt-5 space-y-5">
                 {/* Tarjeta de estado de la mesa seleccionada */}
-                <div className={`rounded-xl border p-4 ${statusStyle[currentSelectedTable.status]}`}>
+                <div className={`rounded-2xl border p-4 ${statusStyle[currentSelectedTable.status]}`}>
                   <p className="text-[11px] font-semibold uppercase tracking-wider opacity-70">
                     Mesa seleccionada
                   </p>
@@ -388,7 +388,7 @@ export default function WaiterView() {
                 )}
 
                 {/* Aviso de política del rol */}
-                <div className="rounded-xl bg-amber-50/70 border border-amber-200/80 p-3 text-xs leading-relaxed text-amber-800">
+                <div className="rounded-xl border border-amber-200/80 bg-amber-50/70 p-3 text-xs leading-relaxed text-amber-800">
                   <AlertTriangle className="mr-1 inline h-3.5 w-3.5 text-amber-600" />
                   <strong>Alcance de mesero:</strong> no permite mover mesas, crear reservas ni alterar
                   diseño del plano. Únicamente liberación tras consumo o bloqueo por avería.
@@ -409,4 +409,3 @@ export default function WaiterView() {
     </div>
   );
 }
-
