@@ -1,13 +1,14 @@
 import { lazy, Suspense } from 'react';
-import { Link, Navigate, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, Routes, Route, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from './app/hooks';
 import { signOut } from './features/auth/store/authSlice';
+import { isRestaurantOpen } from './lib/restaurantHours';
 
 const HomeView = lazy(() => import('./features/home/HomeView'));
 const BookingView = lazy(() => import('./features/booking/BookingView'));
 const LoginView = lazy(() => import('./features/auth/LoginView'));
-const RegisterView = lazy(() => import('./features/auth/RegisterView'));
 const AdminLoginView = lazy(() => import('./features/auth/AdminLoginView'));
+const RegisterView = lazy(() => import('./features/auth/RegisterView'));
 const AdminRegisterView = lazy(() => import('./features/auth/AdminRegisterView'));
 const AdminView = lazy(() => import('./features/admin/AdminView'));
 const ReceptionView = lazy(() => import('./features/reception/ReceptionView'));
@@ -36,45 +37,40 @@ function AdminPreviewRoute() {
 
 function ReceptionRoute() {
   const auth = useAppSelector((state) => state.auth);
+  const restaurants = useAppSelector((state) => state.admin.restaurants);
   const location = useLocation();
+  const { restaurantId } = useParams();
   if (!auth.isAuthenticated) return <Navigate to="/login" replace state={{ returnTo: location.pathname }} />;
   if (auth.role !== 'admin' && auth.role !== 'receptionist') return <Navigate to="/" replace />;
+  if (auth.role === 'receptionist' && auth.restaurantId !== restaurantId) return <Navigate to="/" replace />;
+  if (auth.role === 'receptionist' && !isRestaurantOpen(restaurants.find((restaurant) => restaurant.id === restaurantId))) {
+    return <Navigate to="/login/admin" replace state={{ accessMessage: 'El restaurante está fuera de horario.' }} />;
+  }
   return <ReceptionView />;
 }
 
 function WaiterRoute() {
   const auth = useAppSelector((state) => state.auth);
+  const restaurants = useAppSelector((state) => state.admin.restaurants);
   const location = useLocation();
-  if (!auth.isAuthenticated) return <Navigate to="/login/admin" replace state={{ returnTo: location.pathname }} />;
-  if (auth.role !== 'admin') return <Navigate to="/" replace />;
+  const { restaurantId } = useParams();
+  if (!auth.isAuthenticated) return <Navigate to="/login" replace state={{ returnTo: location.pathname }} />;
+  if (auth.role !== 'admin' && auth.role !== 'waiter') return <Navigate to="/" replace />;
+  if (auth.role === 'waiter' && auth.restaurantId !== restaurantId) return <Navigate to="/" replace />;
+  if (auth.role === 'waiter' && !isRestaurantOpen(restaurants.find((restaurant) => restaurant.id === restaurantId))) {
+    return <Navigate to="/login/admin" replace state={{ accessMessage: 'El restaurante está fuera de horario.' }} />;
+  }
   return <WaiterView />;
 }
 
 function AdminTools() {
   const auth = useAppSelector((state) => state.auth);
-  const restaurants = useAppSelector((state) => state.admin.restaurants.filter((restaurant) => restaurant.ownerEmail === auth.email));
   const dispatch = useAppDispatch();
   const location = useLocation();
   const navigate = useNavigate();
   if (!auth.isAuthenticated || auth.role !== 'admin' || location.pathname !== '/admin') return null;
   return (
     <div className="fixed bottom-5 right-5 z-[70] flex flex-wrap items-center justify-end gap-2">
-      {restaurants[0] && (
-        <>
-          <Link
-            to={`/mesero/${restaurants[0].id}`}
-            className="rounded-full bg-white px-5 py-3 text-sm font-medium text-amber-800 shadow-lg ring-1 ring-amber-200 transition-transform hover:-translate-y-0.5 hover:bg-amber-50"
-          >
-            Vista de mesero
-          </Link>
-          <Link
-            to={`/recepcion/${restaurants[0].id}`}
-            className="rounded-full bg-white px-5 py-3 text-sm font-medium text-brand-primary shadow-lg ring-1 ring-gray-200 transition-transform hover:-translate-y-0.5"
-          >
-            Abrir recepción
-          </Link>
-        </>
-      )}
       <Link to="/admin/vista-cliente" className="rounded-full bg-brand-primary px-5 py-3 text-sm font-medium text-white shadow-lg transition-transform hover:-translate-y-0.5">Vista de cliente</Link>
       <button
         onClick={() => { dispatch(signOut()); navigate('/', { replace: true }); }}

@@ -81,6 +81,8 @@ export default function TableMapContainer({ restaurantId, layout: suppliedLayout
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
+    if (target.closest('button')) return;
+
     const pointer = { id: e.pointerId, x: e.clientX, y: e.clientY };
     activePointersRef.current = [...activePointersRef.current.filter(item => item.id !== e.pointerId), pointer];
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -93,7 +95,7 @@ export default function TableMapContainer({ restaurantId, layout: suppliedLayout
       };
       dragStartRef.current = null;
       setIsPinching(true);
-    } else if (!target.closest('button') && zoom > 1.05) {
+    } else if (zoom > 1.05) {
       dragStartRef.current = { clientX: e.clientX, clientY: e.clientY, panX: pan.x, panY: pan.y };
     }
   };

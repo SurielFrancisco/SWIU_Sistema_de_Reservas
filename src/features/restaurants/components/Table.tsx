@@ -24,6 +24,8 @@ export default function Table({ table, restaurantId, floorId, tableScale = 1 }: 
   const reservations = useAppSelector((state) => state.reservations.reservations);
   const selectedTableId = draft.selectedTableId;
   const isSelected = selectedTableId === table.id;
+  const canSelectTable = !['automatic-free', 'automatic-fixed-fee', 'per-person-fee', 'zone-free'].includes(draft.reservationMethod ?? 'table-free');
+  const hasCapacity = table.capacity >= draft.guests;
   
   const effectiveStatus = isTableReserved(reservations, {
     restaurantId,
@@ -35,7 +37,7 @@ export default function Table({ table, restaurantId, floorId, tableScale = 1 }: 
   }) ? 'occupied' : table.status;
 
   const handleSelect = () => {
-    if (effectiveStatus === 'available') {
+    if (effectiveStatus === 'available' && canSelectTable && hasCapacity) {
       dispatch(selectTable(isSelected ? null : table.id));
     }
   };
@@ -83,7 +85,7 @@ export default function Table({ table, restaurantId, floorId, tableScale = 1 }: 
     >
       <button
         type="button"
-        disabled={effectiveStatus !== 'available'}
+        disabled={effectiveStatus !== 'available' || !canSelectTable || !hasCapacity}
         onClick={handleSelect}
         className={cn(
           'flex flex-col items-center justify-center border transition-all duration-150 relative outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40',

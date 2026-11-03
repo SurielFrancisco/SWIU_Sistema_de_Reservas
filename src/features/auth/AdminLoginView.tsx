@@ -12,7 +12,8 @@ import {
   UtensilsCrossed,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAppDispatch } from '@/app/hooks';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { getRestaurantHoursMessage, isRestaurantOpen } from '@/lib/restaurantHours';
 import { signIn } from './store/authSlice';
 
 // Credenciales de demostración — en producción vendrían del backend
@@ -34,6 +35,8 @@ const demoCards = [
 export default function AdminLoginView() {
   const navigate   = useNavigate();
   const dispatch   = useAppDispatch();
+  const employees = useAppSelector((state) => state.admin.employees);
+  const restaurants = useAppSelector((state) => state.admin.restaurants);
 
   const [email,        setEmail       ] = useState('');
   const [password,     setPassword    ] = useState('');
@@ -50,6 +53,10 @@ export default function AdminLoginView() {
     setTimeout(() => {
       const trimmedEmail = email.toLowerCase().trim();
       const admin = DEMO_ADMINS[trimmedEmail];
+      const employee = employees.find((item) => item.email === trimmedEmail);
+      const employeeRestaurant = employee
+        ? restaurants.find((restaurant) => restaurant.id === employee.restaurantId)
+        : undefined;
 
       if (admin) {
         if (admin.password !== password) {
@@ -57,20 +64,36 @@ export default function AdminLoginView() {
           setIsLoading(false);
           return;
         }
-      } else if (password.length < 6) {
+        dispatch(signIn({ email: trimmedEmail, role: 'admin', userName: admin.name }));
+        navigate('/admin', { replace: true });
+        return;
+      }
+
+      if (!employee) {
+        setError('No encontramos una cuenta administrativa o de personal con ese correo.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (password.length < 6) {
         setError('La contraseña debe tener al menos 6 caracteres.');
         setIsLoading(false);
         return;
       }
 
-      dispatch(
-        signIn({
-          email: trimmedEmail,
-          role: 'admin',
-          userName: admin?.name || trimmedEmail.split('@')[0],
-        }),
-      );
-      navigate('/admin', { replace: true });
+      if (!isRestaurantOpen(employeeRestaurant)) {
+        setError(`No puedes entrar fuera del horario del restaurante. ${getRestaurantHoursMessage(employeeRestaurant)}`);
+        setIsLoading(false);
+        return;
+      }
+
+      dispatch(signIn({
+        email: trimmedEmail,
+        role: employee.role,
+        userName: employee.name,
+        restaurantId: employee.restaurantId,
+      }));
+      navigate(employee.role === 'waiter' ? `/mesero/${employee.restaurantId}` : `/recepcion/${employee.restaurantId}`, { replace: true });
     }, 600);
   }
 
@@ -324,4 +347,3 @@ export default function AdminLoginView() {
     </main>
   );
 }
-

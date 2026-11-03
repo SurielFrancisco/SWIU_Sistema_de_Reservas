@@ -33,6 +33,28 @@ export interface Restaurant {
   image: string;
 }
 
+export type ReservationMethod =
+  | 'automatic-free'
+  | 'zone-free'
+  | 'table-free'
+  | 'automatic-fixed-fee'
+  | 'table-fixed-fee'
+  | 'per-person-fee'
+  | 'zone-table-fee'
+  | 'table-deposit'
+  | 'refundable-guarantee'
+  | 'members-only';
+
+export type Weekday = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+export interface RestaurantHours {
+  enabled: boolean;
+  open: string;
+  close: string;
+}
+
+export type RestaurantSchedule = Record<Weekday, RestaurantHours>;
+
 export interface RestaurantArea {
   id: string;
   name: string;
@@ -50,4 +72,7 @@ export interface ManagedRestaurant extends Restaurant {
   ownerEmail: string;
   status: 'draft' | 'published';
   layout: RestaurantLayout;
+  tableCount?: number;
+  schedule?: RestaurantSchedule;
+  reservationMethods?: ReservationMethod[];
 }

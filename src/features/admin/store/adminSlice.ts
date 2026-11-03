@@ -1,11 +1,20 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { FloorLayout, ManagedRestaurant, RestaurantArea, TableInfo } from '@/features/restaurants/types';
+import type { FloorLayout, ManagedRestaurant, RestaurantArea, RestaurantHours, RestaurantSchedule, ReservationMethod, TableInfo, Weekday } from '@/features/restaurants/types';
 
 export interface AdminState {
   restaurants: ManagedRestaurant[];
+  employees: RestaurantEmployee[];
 }
 
-const initialState: AdminState = { restaurants: [] };
+export interface RestaurantEmployee {
+  id: string;
+  restaurantId: string;
+  name: string;
+  email: string;
+  role: 'waiter' | 'receptionist';
+}
+
+const initialState: AdminState = { restaurants: [], employees: [] };
 
 const getRestaurant = (state: AdminState, restaurantId: string) =>
   state.restaurants.find((restaurant) => restaurant.id === restaurantId);
@@ -17,9 +26,46 @@ const adminSlice = createSlice({
     createRestaurant: (state, action: PayloadAction<ManagedRestaurant>) => {
       state.restaurants.push(action.payload);
     },
+    removeRestaurant: (state, action: PayloadAction<string>) => {
+      state.restaurants = state.restaurants.filter((restaurant) => restaurant.id !== action.payload);
+      state.employees = state.employees.filter((employee) => employee.restaurantId !== action.payload);
+    },
+    createEmployee: (state, action: PayloadAction<RestaurantEmployee>) => {
+      state.employees.push(action.payload);
+    },
+    removeEmployee: (state, action: PayloadAction<string>) => {
+      state.employees = state.employees.filter((employee) => employee.id !== action.payload);
+    },
     updateRestaurant: (state, action: PayloadAction<Pick<ManagedRestaurant, 'id' | 'name' | 'type' | 'location' | 'image'>>) => {
       const restaurant = getRestaurant(state, action.payload.id);
       if (restaurant) Object.assign(restaurant, action.payload);
+    },
+    updateRestaurantCapacity: (state, action: PayloadAction<{ restaurantId: string; tableCount: number }>) => {
+      const restaurant = getRestaurant(state, action.payload.restaurantId);
+      if (restaurant) restaurant.tableCount = action.payload.tableCount;
+    },
+    updateRestaurantSchedule: (state, action: PayloadAction<{ restaurantId: string; schedule: RestaurantSchedule }>) => {
+      const restaurant = getRestaurant(state, action.payload.restaurantId);
+      if (restaurant) restaurant.schedule = action.payload.schedule;
+    },
+    updateRestaurantDay: (state, action: PayloadAction<{ restaurantId: string; day: Weekday; changes: Partial<RestaurantHours> }>) => {
+      const restaurant = getRestaurant(state, action.payload.restaurantId);
+      if (restaurant) {
+        restaurant.schedule ??= {
+          monday: { enabled: true, open: '12:00', close: '22:00' },
+          tuesday: { enabled: true, open: '12:00', close: '22:00' },
+          wednesday: { enabled: true, open: '12:00', close: '22:00' },
+          thursday: { enabled: true, open: '12:00', close: '22:00' },
+          friday: { enabled: true, open: '12:00', close: '23:00' },
+          saturday: { enabled: true, open: '12:00', close: '23:00' },
+          sunday: { enabled: false, open: '12:00', close: '22:00' },
+        };
+        restaurant.schedule[action.payload.day] = { ...restaurant.schedule[action.payload.day], ...action.payload.changes };
+      }
+    },
+    setReservationMethods: (state, action: PayloadAction<{ restaurantId: string; methods: ReservationMethod[] }>) => {
+      const restaurant = getRestaurant(state, action.payload.restaurantId);
+      if (restaurant) restaurant.reservationMethods = action.payload.methods;
     },
     setRestaurantStatus: (state, action: PayloadAction<{ restaurantId: string; status: ManagedRestaurant['status'] }>) => {
       const restaurant = getRestaurant(state, action.payload.restaurantId);
@@ -66,9 +112,12 @@ const adminSlice = createSlice({
       const table = floor?.tables.find((item) => item.id === action.payload.tableId);
       if (table) table.status = action.payload.status;
     },
-    hydrateAdmin: (_state, action: PayloadAction<AdminState>) => action.payload,
+    hydrateAdmin: (_state, action: PayloadAction<AdminState>) => ({
+      restaurants: action.payload.restaurants ?? [],
+      employees: action.payload.employees ?? [],
+    }),
   },
 });
 
-export const { createRestaurant, updateRestaurant, setRestaurantStatus, addFloor, removeFloor, addArea, updateArea, removeArea, addTable, removeTable, moveTable, setTableStatus, hydrateAdmin } = adminSlice.actions;
+export const { createRestaurant, removeRestaurant, createEmployee, removeEmployee, updateRestaurant, updateRestaurantCapacity, updateRestaurantSchedule, updateRestaurantDay, setReservationMethods, setRestaurantStatus, addFloor, removeFloor, addArea, updateArea, removeArea, addTable, removeTable, moveTable, setTableStatus, hydrateAdmin } = adminSlice.actions;
 export default adminSlice.reducer;

@@ -4,7 +4,8 @@ export interface AuthState {
   isAuthenticated: boolean;
   userName: string;
   email: string;
-  role: 'customer' | 'admin' | 'receptionist';
+  role: 'customer' | 'admin' | 'receptionist' | 'waiter';
+  restaurantId: string | null;
 }
 
 const initialState: AuthState = {
@@ -12,23 +13,26 @@ const initialState: AuthState = {
   userName: '',
   email: '',
   role: 'customer',
+  restaurantId: null,
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    signIn: (state, action: PayloadAction<{ email: string; role?: AuthState['role']; userName?: string }>) => {
+    signIn: (state, action: PayloadAction<{ email: string; role?: AuthState['role']; userName?: string; restaurantId?: string }>) => {
       state.isAuthenticated = true;
       state.email = action.payload.email;
       state.userName = action.payload.userName || action.payload.email.split('@')[0] || 'Cliente';
       state.role = action.payload.role || 'customer';
+      state.restaurantId = action.payload.restaurantId || null;
     },
     signOut: (state) => {
       state.isAuthenticated = false;
       state.userName = '';
       state.email = '';
       state.role = 'customer';
+      state.restaurantId = null;
     },
     hydrateAuth: (_state, action: PayloadAction<AuthState>) => ({ ...initialState, ...action.payload }),
   },

@@ -8,6 +8,8 @@ interface PaymentModalProps {
   onComplete: (wasPaid: boolean) => void;
   restaurantName: string;
   deposit: number;
+  paymentLabel?: string;
+  requiredPayment?: boolean;
 }
 
 export default function PaymentModal({
@@ -16,6 +18,8 @@ export default function PaymentModal({
   onComplete,
   restaurantName,
   deposit,
+  paymentLabel = 'Anticipo opcional',
+  requiredPayment = false,
 }: PaymentModalProps) {
   const [step, setStep] = useState<'offer' | 'card'>('offer');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -98,15 +102,15 @@ export default function PaymentModal({
                 <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full border border-gray-200 bg-brand-secondary">
                   <CreditCard className="h-6 w-6 text-brand-primary" />
                 </div>
-                <p className="mb-3 text-xs font-semibold tracking-[0.16em] text-gray-500">OPCIONAL EN ESTE RESTAURANTE</p>
+                <p className="mb-3 text-xs font-semibold tracking-[0.16em] text-gray-500">{requiredPayment ? 'PAGO REQUERIDO' : 'OPCIONAL EN ESTE RESTAURANTE'}</p>
                 <h2 id="payment-title" className="font-serif text-3xl font-medium tracking-tight text-brand-primary">
                   Añade un anticipo
                 </h2>
                 <p className="mt-4 leading-relaxed text-gray-500">
-                  En {restaurantName} puedes dejar un anticipo para tu reserva. Se descontará de tu consumo al visitarnos.
+                  {requiredPayment ? `Para confirmar tu modalidad de reserva en ${restaurantName} debes completar este pago simulado.` : `En ${restaurantName} puedes dejar un anticipo para tu reserva. Se descontará de tu consumo al visitarnos.`}
                 </p>
                 <div className="mt-6 flex items-center justify-between rounded-2xl border border-gray-200 bg-brand-secondary/60 p-4">
-                  <span className="text-sm font-medium text-gray-600">Anticipo opcional</span>
+                  <span className="text-sm font-medium text-gray-600">{paymentLabel}</span>
                   <span className="font-serif text-2xl font-medium text-brand-primary">${deposit} MXN</span>
                 </div>
                 <div className="mt-7 flex flex-col gap-3">
@@ -115,16 +119,16 @@ export default function PaymentModal({
                     onClick={() => setStep('card')}
                     className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-primary px-5 py-3.5 text-sm font-medium text-white shadow-lg shadow-gray-300/40 transition-all hover:-translate-y-0.5 hover:bg-brand-primary/90"
                   >
-                    Pagar anticipo
+                    {requiredPayment ? 'Continuar al pago' : 'Pagar anticipo'}
                     <CreditCard className="h-4 w-4" />
                   </button>
-                  <button
+                  {!requiredPayment && <button
                     type="button"
                     onClick={() => completePayment(false)}
                     className="rounded-full px-5 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-brand-primary"
                   >
                     Reservar sin anticipo
-                  </button>
+                  </button>}
                 </div>
               </>
             ) : (

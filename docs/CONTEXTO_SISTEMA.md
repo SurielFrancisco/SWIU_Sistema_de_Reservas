@@ -8,7 +8,7 @@
 
 ## 1. Propósito
 
-**SDReservas** es una aplicación web de demostración para descubrir restaurantes y reservar mesas desde un plano interactivo. La propuesta central es permitir que una persona seleccione fecha, hora, número de comensales, duración y una mesa específica dentro de la distribución del restaurante.
+**SDReservas** es una aplicación web de demostración para descubrir restaurantes y reservar mesas desde un plano interactivo. La propuesta central es permitir que una persona seleccione fecha, hora, número de comensales, duración y la modalidad de asignación de mesa que ofrece el restaurante.
 
 El sistema también permite:
 
@@ -89,13 +89,16 @@ src/
 
 El campo de búsqueda y los botones «Buscar» y «Ver todos» son actualmente decorativos: no filtran ni cambian de vista.
 
-### Inicio de sesión: `/login`
+### Inicio de sesión: `/login` y `/login/admin`
 
-`LoginView` solicita correo y contraseña en la interfaz, pero solo utiliza el correo para el estado de autenticación. No valida credenciales ni se comunica con un servicio externo. Al iniciar:
+`LoginView` es el acceso para clientes. `AdminLoginView` es el acceso para administradores de restaurantes y para las cuentas operativas de mesero o recepcionista creadas por el administrador. La autenticación continúa siendo simulada y local: no valida credenciales contra un servidor ni se comunica con un servicio externo. Al iniciar:
 
 1. Se ejecuta `signIn({ email })`.
 2. `userName` se deriva de la parte anterior a `@`.
-3. Se redirige a la ruta de retorno guardada o a `/`.
+3. Los clientes regresan a la ruta de retorno guardada o a `/`.
+4. Los administradores son enviados a `/admin`.
+5. Los empleados identificados por su correo son enviados a su vista operativa asignada únicamente si el restaurante está abierto según el horario configurado.
+6. Las rutas operativas vuelven a exigir el horario vigente, por lo que una sesión persistida no permite trabajar fuera de horario.
 
 ### Reserva: `/restaurant/:id`
 
@@ -124,13 +127,15 @@ Los planos son datos simulados estáticos. En el estado inicial todas las mesas 
 ## 6. Flujo de creación de reservas
 
 1. Al abrir un plano, `TableMapContainer` inicializa el borrador global con el restaurante y su primer piso.
-2. La persona selecciona fecha, hora (intervalos de 30 minutos), comensales de 1 a 8 y duración de 30 a 180 minutos.
+2. La persona selecciona fecha, hora (intervalos de 30 minutos), comensales de 1 a 8, duración de 30 a 180 minutos y una modalidad habilitada por el restaurante.
 3. Para la fecha de hoy, el selector deshabilita opciones anteriores a la hora local actual.
 4. Cada `Table` calcula su estado efectivo. Una mesa ya reservada para un intervalo que se cruza con el solicitado aparece como ocupada y no puede elegirse.
-5. «Confirmar Reserva» requiere una mesa seleccionada y una sesión iniciada. Sin sesión abre `LoginRequiredModal`.
-6. En Sushi Zen se abre `PaymentModal`: se puede simular el pago de un anticipo de $200 MXN o continuar sin pagar.
-7. Se crea una reserva con UUID, estado `upcoming` y los datos del borrador; se guarda en Redux y se limpia la mesa seleccionada.
-8. `ReservationsList` permite consultar la reserva y cancelarla tras una confirmación explícita. Cancelar cambia su estado a `cancelled`.
+5. Las modalidades automáticas eligen la mesa disponible con menor capacidad suficiente para los comensales. `zone-free` solicita una zona y asigna automáticamente una mesa disponible dentro de ella.
+6. Las modalidades de selección de mesa permiten elegir una mesa disponible en el plano; el mapa deshabilita la selección cuando la modalidad asigna mesa automáticamente.
+7. «Confirmar Reserva» requiere una mesa resuelta y una sesión iniciada. Sin sesión abre `LoginRequiredModal`.
+8. En modalidades pagadas se abre `PaymentModal` para simular el cargo correspondiente.
+9. Se crea una reserva con UUID, estado `upcoming` y los datos del borrador; se guarda en Redux y se limpia la mesa seleccionada.
+10. `ReservationsList` permite consultar la reserva y cancelarla tras una confirmación explícita. Cancelar cambia su estado a `cancelled`.
 
 ### Regla de solapamiento
 
@@ -142,7 +147,7 @@ inicioSolicitado < inicioExistente + duraciónExistente
 inicioExistente < inicioSolicitado + duraciónSolicitada
 ```
 
-Las reservas canceladas no bloquean la mesa. La capacidad de la mesa **no se contrasta aún** contra la cantidad de personas seleccionada.
+Las reservas canceladas no bloquean la mesa. Las modalidades automáticas y por zona solo consideran mesas disponibles con capacidad suficiente para la cantidad de personas seleccionada.
 
 ## 7. Estado y persistencia
 
@@ -153,9 +158,9 @@ El store se declara en `src/app/store.ts` y contiene dos slices:
 | Slice | Estado | Acciones principales |
 | --- | --- | --- |
 | `auth` | `isAuthenticated`, `userName`, `email` | `signIn`, `signOut`, `hydrateAuth` |
-| `reservations` | `draft`, `reservations` | `initializeDraft`, `selectTable`, `setDateTime`, `setGuests`, `setDuration`, `setPreferences`, `addReservation`, `cancelReservation`, `hydrateReservations` |
+| `reservations` | `draft`, `reservations` | `initializeDraft`, `selectTable`, `setReservationMethod`, `setReservationZone`, `setDateTime`, `setGuests`, `setDuration`, `setPreferences`, `addReservation`, `cancelReservation`, `hydrateReservations` |
 
-`draft` mantiene: restaurante, piso, mesa seleccionada, fecha, hora, comensales, duración y preferencias. Actualmente `preferences` se conserva en el slice, pero no tiene campo en el formulario ni se añade a `ReservationDetails`.
+`draft` mantiene: restaurante, piso, modalidad, zona, mesa seleccionada, fecha, hora, comensales, duración y preferencias. Actualmente `preferences` se conserva en el slice, pero no tiene campo en el formulario ni se añade a `ReservationDetails`.
 
 ### Persistencia
 

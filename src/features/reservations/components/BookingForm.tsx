@@ -1,14 +1,15 @@
-import { useState } from "react";
-import { Calendar, Clock, Users, Check, CheckCircle2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Calendar, Clock, Users, Check, CheckCircle2, CreditCard } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { getPaymentOption, getRestaurantLayout } from "@/features/restaurants/repository";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { createId } from "@/lib/ids";
-import { getLocalDate, getLocalTime } from "@/lib/date";
-import { addReservation, selectTable, setDateTime, setDuration, setGuests } from "../store/reservationsSlice";
+import { getLocalDate, getNextReservationSlot } from "@/lib/date";
+import { addReservation, selectTable, setDateTime, setDuration, setGuests, setReservationMethod, setReservationZone } from "../store/reservationsSlice";
+import { isTableReserved } from "../selectors";
 import LoginRequiredModal from "./LoginRequiredModal";
 import PaymentModal from "./PaymentModal";
-import type { RestaurantLayout } from '@/features/restaurants/types';
+import type { ReservationMethod, RestaurantLayout, RestaurantSchedule, TableInfo, Weekday } from '@/features/restaurants/types';
 
 const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
   const hour24 = Math.floor(i / 2);
@@ -19,6 +20,25 @@ const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
   const label = `${hour12}:${minute} ${period}`;
   return { value, label };
 });
+const methodOptions: { value: ReservationMethod; label: string; paid: boolean; amount: number }[] = [
+  { value: 'automatic-free', label: 'Asignación automática de mesa', paid: false, amount: 0 },
+  { value: 'zone-free', label: 'Elección de zona', paid: false, amount: 0 },
+  { value: 'table-free', label: 'Elección gratuita de mesa', paid: false, amount: 0 },
+  { value: 'automatic-fixed-fee', label: 'Asignación automática con tarifa fija', paid: true, amount: 100 },
+  { value: 'table-fixed-fee', label: 'Selección de mesa con tarifa fija', paid: true, amount: 100 },
+  { value: 'per-person-fee', label: 'Tarifa por persona', paid: true, amount: 75 },
+  { value: 'zone-table-fee', label: 'Tarifa por zona o mesa', paid: true, amount: 150 },
+  { value: 'table-deposit', label: 'Selección de mesa con depósito anticipado', paid: true, amount: 200 },
+  { value: 'refundable-guarantee', label: 'Reservación con garantía reembolsable', paid: true, amount: 200 },
+  { value: 'members-only', label: 'Selección exclusiva para miembros', paid: true, amount: 200 },
+];
+const weekdayByNumber: Weekday[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const defaultSchedule: RestaurantSchedule = {
+  monday: { enabled: true, open: '00:00', close: '23:30' }, tuesday: { enabled: true, open: '00:00', close: '23:30' },
+  wednesday: { enabled: true, open: '00:00', close: '23:30' }, thursday: { enabled: true, open: '00:00', close: '23:30' },
+  friday: { enabled: true, open: '00:00', close: '23:30' }, saturday: { enabled: true, open: '00:00', close: '23:30' },
+  sunday: { enabled: true, open: '00:00', close: '23:30' },
+};
 
 export default function BookingForm({
   restaurantId,
@@ -30,12 +50,27 @@ export default function BookingForm({
   const dispatch = useAppDispatch();
   const draft = useAppSelector((state) => state.reservations.draft);
   const auth = useAppSelector((state) => state.auth);
+  const managedRestaurant = useAppSelector((state) => state.admin.restaurants.find((restaurant) => restaurant.id === restaurantId));
+  const reservations = useAppSelector((state) => state.reservations.reservations);
   const location = useLocation();
   const paymentOption = getPaymentOption(restaurantId);
+  const schedule = managedRestaurant?.schedule ?? defaultSchedule;
+  const configuredMethods = managedRestaurant?.reservationMethods ?? ['automatic-free', 'table-free'];
+  const availableMethods = methodOptions.filter((method) => configuredMethods.includes(method.value));
+  const reservationMethod = availableMethods.some((method) => method.value === draft.reservationMethod)
+    ? draft.reservationMethod
+    : availableMethods[0]?.value ?? 'table-free';
+  const selectedMethod = methodOptions.find((method) => method.value === reservationMethod) ?? methodOptions[2];
+  const automaticMethods: ReservationMethod[] = ['automatic-free', 'automatic-fixed-fee', 'per-person-fee'];
+  const isAutomaticAssignment = automaticMethods.includes(reservationMethod);
+  const isZoneAssignment = reservationMethod === 'zone-free';
+  const reservationAmount = selectedMethod.value === 'per-person-fee'
+    ? selectedMethod.amount * draft.guests
+    : selectedMethod.amount;
 
   // Find the selected table across all floors of the current restaurant
   const layout = suppliedLayout ?? getRestaurantLayout(restaurantId);
-  let selectedTableInfo = null;
+  let selectedTableInfo: TableInfo | null = null;
   if (layout && draft.selectedTableId) {
     for (const floor of layout.floors) {
       const table = floor.tables.find(t => t.id === draft.selectedTableId);
@@ -45,29 +80,134 @@ export default function BookingForm({
       }
     }
   }
+  const activeFloor = layout?.floors.find((floor) => floor.id === draft.floorId) ?? layout?.floors[0];
+  const availableZones = [...new Set(activeFloor?.tables.map((table) => table.area).filter(Boolean))] as string[];
+  const selectableTables = useMemo(
+    () =>
+      activeFloor?.tables
+        .filter((table) =>
+          table.status === 'available' &&
+          table.capacity >= draft.guests &&
+          !isTableReserved(reservations, {
+            restaurantId: draft.restaurantId ?? '',
+            floorId: activeFloor.id,
+            tableId: table.id,
+            date: draft.date,
+            time: draft.time,
+            durationMinutes: draft.durationMinutes,
+          }),
+        )
+        .sort((first, second) => first.capacity - second.capacity || first.id.localeCompare(second.id)) ?? [],
+    [activeFloor, draft.date, draft.durationMinutes, draft.guests, draft.restaurantId, draft.time, reservations],
+  );
 
   const today = getLocalDate();
+  const nextSlot = getNextReservationSlot();
   const minimumTime =
-    draft.date === today ? getLocalTime() : undefined;
+    draft.date === today
+      ? nextSlot.date === today
+        ? nextSlot.time
+        : '24:00'
+      : undefined;
+  const selectedDay = weekdayByNumber[new Date(`${draft.date}T12:00:00`).getDay()];
+  const daySchedule = schedule[selectedDay];
+  const isClosedDay = !daySchedule?.enabled;
+  const reservationTimes = TIME_OPTIONS.filter((time) => !daySchedule || (time.value >= daySchedule.open && time.value <= daySchedule.close));
 
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [confirmedTable, setConfirmedTable] = useState<string | null>(null);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [reservationError, setReservationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!availableMethods.some((method) => method.value === draft.reservationMethod) && availableMethods[0]) {
+      dispatch(setReservationMethod(availableMethods[0].value));
+    }
+  }, [availableMethods, dispatch, draft.reservationMethod]);
+
+  useEffect(() => {
+    if (!activeFloor || !draft.restaurantId) return;
+
+    const candidates = selectableTables.filter((table) => !isZoneAssignment || table.area === draft.selectedZone);
+    if (isAutomaticAssignment || (isZoneAssignment && draft.selectedZone)) {
+      const nextTable = candidates[0];
+      if (nextTable?.id !== draft.selectedTableId) dispatch(selectTable(nextTable?.id ?? null));
+    } else if (
+      !isAutomaticAssignment &&
+      !isZoneAssignment &&
+      draft.selectedTableId &&
+      !selectableTables.some((table) => table.id === draft.selectedTableId)
+    ) {
+      dispatch(selectTable(null));
+    }
+  }, [
+    activeFloor,
+    dispatch,
+    draft.date,
+    draft.durationMinutes,
+    draft.guests,
+    draft.restaurantId,
+    draft.selectedTableId,
+    draft.selectedZone,
+    isAutomaticAssignment,
+    isZoneAssignment,
+    reservations,
+    selectableTables,
+    selectedTableInfo,
+  ]);
 
   const handleDateChange = (date: string) => {
+    if (date === today && nextSlot.date !== today) {
+      setReservationError(null);
+      dispatch(setDateTime(nextSlot));
+      return;
+    }
+
+    const dateSchedule = schedule[weekdayByNumber[new Date(`${date}T12:00:00`).getDay()]];
     const time =
-      date === today && draft.time < getLocalTime()
-        ? getLocalTime()
-        : draft.time;
+      date === today && nextSlot.date === today && draft.time < nextSlot.time
+        ? nextSlot.time
+        : dateSchedule?.enabled && draft.time >= dateSchedule.open && draft.time <= dateSchedule.close ? draft.time : dateSchedule?.open ?? draft.time;
+    setReservationError(null);
     dispatch(setDateTime({ date, time }));
   };
 
   const handleTimeChange = (time: string) => {
+    setReservationError(null);
     dispatch(setDateTime({ date: draft.date, time }));
   };
 
+  const handleMethodChange = (method: ReservationMethod) => {
+    setReservationError(null);
+    dispatch(setReservationMethod(method));
+  };
+
+  const isReservationInPast = () => {
+    const reservationStart = new Date(`${draft.date}T${draft.time}`);
+    return (
+      Number.isNaN(reservationStart.getTime()) ||
+      reservationStart.getTime() <= Date.now()
+    );
+  };
+
   const completeReservation = (wasPaid: boolean) => {
+    if (isReservationInPast()) {
+      setReservationError('La fecha y hora seleccionadas ya pasaron. Elige un horario posterior.');
+      setShowPaymentModal(false);
+      return;
+    }
+
+    const selectedTableIsAvailable = selectedTableInfo
+      ? selectableTables.some((table) => table.id === selectedTableInfo?.id)
+      : false;
+
+    if (!selectedTableIsAvailable) {
+      setReservationError('La mesa seleccionada ya no está disponible para estos criterios.');
+      setShowPaymentModal(false);
+      return;
+    }
+
     if (draft.selectedTableId && selectedTableInfo && draft.restaurantId && draft.floorId) {
       const newReservation = {
         id: createId(),
@@ -81,8 +221,9 @@ export default function BookingForm({
         guests: draft.guests,
         customerName: auth.userName,
         status: 'upcoming' as const,
-        paymentStatus: paymentOption ? (wasPaid ? 'paid' as const : 'not-paid' as const) : undefined,
-        depositAmount: wasPaid ? paymentOption?.deposit : undefined,
+        paymentStatus: selectedMethod.paid || paymentOption ? (wasPaid ? 'paid' as const : 'not-paid' as const) : undefined,
+        depositAmount: wasPaid ? (selectedMethod.paid ? reservationAmount : paymentOption?.deposit) : undefined,
+        reservationMethod,
       };
       dispatch(addReservation(newReservation));
       setConfirmedTable(selectedTableInfo.label);
@@ -93,12 +234,13 @@ export default function BookingForm({
   };
 
   const handleReserve = () => {
+    setReservationError(null);
     if (!auth.isAuthenticated) {
       setShowLoginPrompt(true);
       return;
     }
 
-    if (paymentOption) {
+    if (selectedMethod.paid || paymentOption) {
       setShowPaymentModal(true);
       return;
     }
@@ -143,7 +285,7 @@ export default function BookingForm({
                 paddingRight: '2.5rem'
               }}
             >
-              {TIME_OPTIONS.map((time) => {
+              {reservationTimes.map((time) => {
                 const isDisabled = minimumTime ? time.value < minimumTime : false;
                 return (
                   <option key={time.value} value={time.value} disabled={isDisabled}>
@@ -152,6 +294,8 @@ export default function BookingForm({
                 );
               })}
             </select>
+            {isClosedDay && <p className="text-xs font-medium text-amber-700">El restaurante no recibe reservaciones este día.</p>}
+            {!isClosedDay && daySchedule && <p className="text-xs text-gray-500">Horario: {daySchedule.open} a {daySchedule.close}</p>}
           </div>
         </div>
 
@@ -174,6 +318,14 @@ export default function BookingForm({
               ))}
             </select>
           </div>
+
+          <div className="mb-8 space-y-2">
+            <label htmlFor="booking-method" className="flex items-center gap-1.5 text-sm font-medium text-gray-500"><CreditCard className="h-4 w-4" /> Tipo de reserva</label>
+            <select id="booking-method" value={reservationMethod} onChange={(event) => handleMethodChange(event.target.value as ReservationMethod)} className="w-full rounded-lg border border-border bg-brand-secondary p-2.5 text-sm font-medium text-brand-primary outline-none focus:ring-1 focus:ring-brand-primary/20">
+              {availableMethods.map((method) => <option key={method.value} value={method.value}>{method.label}{method.paid ? ` · desde $${method.amount} MXN` : ' · sin costo'}</option>)}
+            </select>
+            {selectedMethod.paid && <p className="text-xs text-gray-500">Al confirmar se abrirá la pasarela de pago simulada para completar esta modalidad.</p>}
+          </div>
           <div className="space-y-2">
             <label htmlFor="booking-duration" className="text-sm font-medium flex items-center gap-1.5 text-gray-500">
               <Clock className="w-4 h-4" /> Duración
@@ -193,10 +345,31 @@ export default function BookingForm({
           </div>
         </div>
 
+        {isZoneAssignment && (
+          <div className="mb-6 space-y-2">
+            <label htmlFor="booking-zone" className="text-sm font-medium text-gray-500">Zona preferida</label>
+            <select
+              id="booking-zone"
+              value={draft.selectedZone ?? ''}
+              onChange={(event) => dispatch(setReservationZone(event.target.value || null))}
+              className="w-full rounded-lg border border-border bg-brand-secondary p-2.5 text-sm font-medium text-brand-primary outline-none focus:ring-1 focus:ring-brand-primary/20"
+            >
+              <option value="">Selecciona una zona</option>
+              {availableZones.map((zone) => <option key={zone} value={zone}>{zone}</option>)}
+            </select>
+          </div>
+        )}
+
         {/* Selected Table Indicator */}
         {!selectedTableInfo && (
           <div className="mb-6 p-4 bg-brand-secondary text-gray-500 border border-border rounded-xl text-sm font-medium text-center">
-            <span role="status">Por favor, selecciona una mesa en el plano.</span>
+            <span role="status">
+              {isAutomaticAssignment
+                ? 'No hay una mesa disponible para estos criterios.'
+                : isZoneAssignment
+                  ? 'Selecciona una zona para asignar una mesa automáticamente.'
+                  : 'Por favor, selecciona una mesa en el plano.'}
+            </span>
           </div>
         )}
 
@@ -219,11 +392,17 @@ export default function BookingForm({
           </div>
         )}
 
+        {reservationError && (
+          <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
+            {reservationError}
+          </div>
+        )}
+
         {/* Submit */}
         <div className="mt-auto pt-4 flex flex-col gap-3">
           <button
             type="button"
-            disabled={!selectedTableInfo}
+            disabled={!selectedTableInfo || isClosedDay || reservationTimes.length === 0}
             onClick={handleReserve}
             className="w-full bg-brand-primary text-white py-3.5 rounded-xl font-medium text-sm hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
@@ -244,13 +423,15 @@ export default function BookingForm({
         onClose={() => setShowLoginPrompt(false)}
         returnTo={location.pathname}
       />
-      {paymentOption && (
+      {(paymentOption || selectedMethod.paid) && (
         <PaymentModal
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
           onComplete={completeReservation}
-          restaurantName={paymentOption.restaurantName}
-          deposit={paymentOption.deposit}
+          restaurantName={paymentOption?.restaurantName ?? managedRestaurant?.name ?? 'este restaurante'}
+          deposit={selectedMethod.paid ? reservationAmount : paymentOption?.deposit ?? 0}
+          paymentLabel={selectedMethod.paid ? 'Pago de la reserva' : 'Anticipo opcional'}
+          requiredPayment={selectedMethod.paid}
         />
       )}
     </>

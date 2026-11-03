@@ -3,18 +3,27 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, Mail, UtensilsCrossed } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { RESTAURANTS_LIST } from '../restaurants/repository';
-import { useAppDispatch } from '@/app/hooks';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { signIn } from './store/authSlice';
 
 export default function LoginView() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
+  const employees = useAppSelector((state) => state.admin.employees);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const trimmedEmail = email.trim().toLowerCase();
+    const employee = employees.find((item) => item.email === trimmedEmail);
+    if (employee) {
+      setError('Las cuentas de mesero y recepcionista deben entrar desde el portal administrativo.');
+      return;
+    }
+    setError('');
     dispatch(signIn({ email, role: 'customer' }));
     const returnTo = (location.state as { returnTo?: string } | null)?.returnTo || '/';
     navigate(returnTo, { replace: true });
@@ -82,6 +91,7 @@ export default function LoginView() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
             <label className="block">
               <span className="mb-2 block text-sm font-medium">Correo electrónico</span>
               <span className="flex h-14 items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 transition-all focus-within:border-gray-400 focus-within:ring-4 focus-within:ring-gray-100">
@@ -151,12 +161,12 @@ export default function LoginView() {
           </p>
 
           <p className="mt-8 text-center text-sm text-gray-500">
-            ¿Tienes un restaurante?{' '}
+            ¿Administras un restaurante?{' '}
             <Link
               to="/login/admin"
               className="font-medium text-brand-primary underline decoration-gray-300 underline-offset-4 transition-colors hover:decoration-brand-primary"
             >
-              Accede como administrador
+              Entra al portal administrativo
             </Link>
           </p>
         </motion.div>

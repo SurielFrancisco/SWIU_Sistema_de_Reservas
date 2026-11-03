@@ -11,3 +11,14 @@ export const getLocalTime = (date = new Date()) => {
 
   return `${hours}:${minutes}`;
 };
+
+export const getNextReservationSlot = (date = new Date()) => {
+  const nextSlot = new Date(date);
+  const minutes = nextSlot.getMinutes();
+  nextSlot.setMinutes(minutes + (30 - (minutes % 30)), 0, 0);
+
+  return {
+    date: getLocalDate(nextSlot),
+    time: getLocalTime(nextSlot),
+  };
+};
