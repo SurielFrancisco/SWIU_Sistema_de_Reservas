@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { RESTAURANTS_LIST } from '../restaurants/repository';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { signIn } from './store/authSlice';
+import { login } from '@/lib/api/auth';
 
 export default function LoginView() {
   const navigate = useNavigate();
@@ -13,9 +14,10 @@ export default function LoginView() {
   const employees = useAppSelector((state) => state.admin.employees);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmedEmail = email.trim().toLowerCase();
     const employee = employees.find((item) => item.email === trimmedEmail);
@@ -24,9 +26,18 @@ export default function LoginView() {
       return;
     }
     setError('');
-    dispatch(signIn({ email, role: 'customer' }));
-    const returnTo = (location.state as { returnTo?: string } | null)?.returnTo || '/';
-    navigate(returnTo, { replace: true });
+    try {
+      const response = await login(trimmedEmail, password);
+      if (response.user.rol !== 'CLIENTE') {
+        setError('Esta cuenta debe entrar desde el portal administrativo.');
+        return;
+      }
+      dispatch(signIn({ token: response.token, userId: response.user.id, email: response.user.email, role: 'customer', userName: response.user.nombre }));
+      const returnTo = (location.state as { returnTo?: string } | null)?.returnTo || '/';
+      navigate(returnTo, { replace: true });
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'No se pudo iniciar sesión.');
+    }
   }
 
   return (
@@ -121,6 +132,8 @@ export default function LoginView() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
                   required
                   placeholder="Tu contraseña"
                   className="h-full min-w-0 flex-1 bg-transparent text-brand-primary outline-none placeholder:text-gray-400"

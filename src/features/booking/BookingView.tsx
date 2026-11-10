@@ -4,14 +4,27 @@ import TableMapContainer from '../restaurants/components/TableMapContainer';
 import BookingForm from '../reservations/components/BookingForm';
 import ReservationsList from '../reservations/components/ReservationsList';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppSelector } from '@/app/hooks';
+import type { RestaurantLayout } from '@/features/restaurants/types';
+import { getRestaurant, mapLayout } from '@/lib/api/restaurants';
 
 export default function BookingView() {
   const { id } = useParams();
   const managedLayout = useAppSelector((state) => state.admin.restaurants.find((restaurant) => restaurant.id === id)?.layout);
+  const token = useAppSelector((state) => state.auth.token);
+  const [apiLayout, setApiLayout] = useState<RestaurantLayout>();
   const [activeTab, setActiveTab] = useState<'mapa' | 'reservas'>('mapa');
   const [role, setRole] = useState<'cliente' | 'recepcionista'>('cliente');
+
+  useEffect(() => {
+    if (!id || !token) return;
+    getRestaurant(id, token)
+      .then(({ restaurante }) => setApiLayout(mapLayout(restaurante)))
+      .catch(() => setApiLayout(undefined));
+  }, [id, token]);
+
+  const layout = apiLayout ?? managedLayout;
 
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] bg-brand-secondary text-brand-primary font-sans selection:bg-brand-primary/10 overflow-hidden">
@@ -162,13 +175,13 @@ export default function BookingView() {
                   
                   {/* Container for the table map with zoom and full-view adaptation */}
                   <div className="flex-1 relative overflow-hidden p-2 sm:p-4 md:p-6 bg-brand-secondary/30 min-h-[420px] md:min-h-[560px]">
-                     <TableMapContainer restaurantId={id} layout={managedLayout} />
+                     <TableMapContainer restaurantId={id} layout={layout} />
                   </div>
                 </div>
 
                 {/* Form Column */}
                 <div className="w-full lg:w-[420px] flex-shrink-0">
-                  <BookingForm restaurantId={id} layout={managedLayout} />
+                  <BookingForm restaurantId={id} layout={layout} />
                 </div>
               </div>
             </motion.div>

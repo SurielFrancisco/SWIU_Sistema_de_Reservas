@@ -2,6 +2,8 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface AuthState {
   isAuthenticated: boolean;
+  token: string;
+  userId: string;
   userName: string;
   email: string;
   role: 'customer' | 'admin' | 'receptionist' | 'waiter';
@@ -10,6 +12,8 @@ export interface AuthState {
 
 const initialState: AuthState = {
   isAuthenticated: false,
+  token: '',
+  userId: '',
   userName: '',
   email: '',
   role: 'customer',
@@ -20,8 +24,10 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    signIn: (state, action: PayloadAction<{ email: string; role?: AuthState['role']; userName?: string; restaurantId?: string }>) => {
+    signIn: (state, action: PayloadAction<{ token?: string; userId?: string; email: string; role?: AuthState['role']; userName?: string; restaurantId?: string }>) => {
       state.isAuthenticated = true;
+      state.token = action.payload.token ?? '';
+      state.userId = action.payload.userId ?? '';
       state.email = action.payload.email;
       state.userName = action.payload.userName || action.payload.email.split('@')[0] || 'Cliente';
       state.role = action.payload.role || 'customer';
@@ -29,6 +35,8 @@ const authSlice = createSlice({
     },
     signOut: (state) => {
       state.isAuthenticated = false;
+      state.token = '';
+      state.userId = '';
       state.userName = '';
       state.email = '';
       state.role = 'customer';

@@ -9,6 +9,7 @@ export interface TableInfo {
   shape: TableShape;
   position: { x: number; y: number };
   area?: string;
+  areaId?: string;
   isAccessible?: boolean;
 }
 

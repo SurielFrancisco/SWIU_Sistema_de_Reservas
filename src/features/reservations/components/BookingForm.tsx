@@ -3,13 +3,14 @@ import { Calendar, Clock, Users, Check, CheckCircle2, CreditCard } from "lucide-
 import { useLocation } from "react-router-dom";
 import { getPaymentOption, getRestaurantLayout } from "@/features/restaurants/repository";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { createId } from "@/lib/ids";
 import { getLocalDate, getNextReservationSlot } from "@/lib/date";
 import { addReservation, selectTable, setDateTime, setDuration, setGuests, setReservationMethod, setReservationZone } from "../store/reservationsSlice";
 import { isTableReserved } from "../selectors";
 import LoginRequiredModal from "./LoginRequiredModal";
 import PaymentModal from "./PaymentModal";
 import type { ReservationMethod, RestaurantLayout, RestaurantSchedule, TableInfo, Weekday } from '@/features/restaurants/types';
+import { ApiError } from '@/lib/api/client';
+import { createReservation } from '@/lib/api/reservations';
 
 const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
   const hour24 = Math.floor(i / 2);
@@ -191,7 +192,7 @@ export default function BookingForm({
     );
   };
 
-  const completeReservation = (wasPaid: boolean) => {
+  const completeReservation = async (wasPaid: boolean) => {
     if (isReservationInPast()) {
       setReservationError('La fecha y hora seleccionadas ya pasaron. Elige un horario posterior.');
       setShowPaymentModal(false);
@@ -209,26 +210,43 @@ export default function BookingForm({
     }
 
     if (draft.selectedTableId && selectedTableInfo && draft.restaurantId && draft.floorId) {
-      const newReservation = {
-        id: createId(),
-        restaurantId: draft.restaurantId,
-        floorId: draft.floorId,
-        tableId: draft.selectedTableId,
-        tableLabel: selectedTableInfo.label,
-        date: draft.date,
-        time: draft.time,
-        durationMinutes: draft.durationMinutes,
-        guests: draft.guests,
-        customerName: auth.userName,
-        status: 'upcoming' as const,
-        paymentStatus: selectedMethod.paid || paymentOption ? (wasPaid ? 'paid' as const : 'not-paid' as const) : undefined,
-        depositAmount: wasPaid ? (selectedMethod.paid ? reservationAmount : paymentOption?.deposit) : undefined,
-        reservationMethod,
-      };
-      dispatch(addReservation(newReservation));
-      setConfirmedTable(selectedTableInfo.label);
-      setPaymentConfirmed(wasPaid);
-      dispatch(selectTable(null));
+      if (!auth.token) {
+        setReservationError('Inicia sesión para confirmar tu reserva.');
+        return;
+      }
+
+      try {
+        const { reserva } = await createReservation(auth.token, {
+          restauranteId: draft.restaurantId,
+          modalidad: reservationMethod,
+          fecha: draft.date,
+          hora: draft.time,
+          duracion: draft.durationMinutes,
+          personas: draft.guests,
+          areaId: reservationMethod === 'zone-free' ? selectedTableInfo.areaId : undefined,
+          mesaId: reservationMethod === 'table-free' ? draft.selectedTableId : undefined,
+        });
+        const saved = reserva.mesas[0];
+        dispatch(addReservation({
+          id: reserva.id,
+          restaurantId: reserva.restauranteId,
+          floorId: draft.floorId,
+          tableId: saved?.mesaId ?? draft.selectedTableId,
+          tableLabel: saved?.mesa?.etiqueta ?? selectedTableInfo.label,
+          date: draft.date,
+          time: draft.time,
+          durationMinutes: reserva.duracionMin,
+          guests: reserva.personas,
+          customerName: auth.userName,
+          status: 'upcoming',
+          reservationMethod,
+        }));
+        setConfirmedTable(saved?.mesa?.etiqueta ?? selectedTableInfo.label);
+        setPaymentConfirmed(wasPaid);
+        dispatch(selectTable(null));
+      } catch (error) {
+        setReservationError(error instanceof ApiError ? error.message : 'No se pudo crear la reserva.');
+      }
     }
     setShowPaymentModal(false);
   };

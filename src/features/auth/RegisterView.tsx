@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { RESTAURANTS_LIST } from '../restaurants/repository';
 import { useAppDispatch } from '@/app/hooks';
 import { signIn } from './store/authSlice';
+import { register } from '@/lib/api/auth';
 
 // Imagen diferente a la del login para dar variedad
 const HERO_IMAGE = RESTAURANTS_LIST[1]?.image ?? RESTAURANTS_LIST[0].image;
@@ -21,7 +22,7 @@ export default function RegisterView() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (password !== confirmPassword) {
@@ -35,9 +36,13 @@ export default function RegisterView() {
 
     setPasswordError('');
 
-    // Simula el registro e inicia sesión directamente como cliente
-    dispatch(signIn({ email, role: 'customer', userName: name.trim() || email.split('@')[0] }));
-    navigate('/', { replace: true });
+    try {
+      const response = await register(name.trim(), email, password);
+      dispatch(signIn({ token: response.token, userId: response.user.id, email: response.user.email, role: 'customer', userName: response.user.nombre }));
+      navigate('/', { replace: true });
+    } catch (error) {
+      setPasswordError(error instanceof Error ? error.message : 'No se pudo crear la cuenta.');
+    }
   }
 
   return (
@@ -241,4 +246,3 @@ export default function RegisterView() {
     </main>
   );
 }
-

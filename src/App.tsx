@@ -1,8 +1,10 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { Link, Navigate, Routes, Route, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from './app/hooks';
 import { signOut } from './features/auth/store/authSlice';
 import { isRestaurantOpen } from './lib/restaurantHours';
+import { getMyReservations, mapReservation } from './lib/api/reservations';
+import { hydrateReservations } from './features/reservations/store/reservationsSlice';
 
 const HomeView = lazy(() => import('./features/home/HomeView'));
 const BookingView = lazy(() => import('./features/booking/BookingView'));
@@ -82,9 +84,28 @@ function AdminTools() {
   );
 }
 
+function SessionSync() {
+  const dispatch = useAppDispatch();
+  const token = useAppSelector((state) => state.auth.token);
+  const loadedToken = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!token || loadedToken.current === token) return;
+    loadedToken.current = token;
+    getMyReservations(token)
+      .then(({ reservas }) => dispatch(hydrateReservations(reservas.map(mapReservation))))
+      .catch(() => {
+        loadedToken.current = undefined;
+      });
+  }, [dispatch, token]);
+
+  return null;
+}
+
 function App() {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
+      <SessionSync />
       <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-brand-secondary text-sm text-gray-500">Cargando...</div>}>
         <Routes>
           <Route path="/" element={<HomeRoute />} />

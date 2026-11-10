@@ -2,8 +2,9 @@ import { UtensilsCrossed, ArrowRight, Search, Star, MapPin, Calendar as Calendar
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RESTAURANTS_LIST } from '../restaurants/repository';
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useAppSelector } from '@/app/hooks';
+import { getPublicRestaurants, mapRestaurant } from '@/lib/api/restaurants';
 
 const ReservationsList = lazy(() => import('../reservations/components/ReservationsList'));
 
@@ -25,7 +26,15 @@ export default function HomeView({ preview = false }: { preview?: boolean }) {
   const [showReservations, setShowReservations] = useState(false);
   const auth = useAppSelector((state) => state.auth);
   const managedRestaurants = useAppSelector((state) => state.admin.restaurants.filter((restaurant) => restaurant.status === 'published'));
-  const restaurants = [...RESTAURANTS_LIST, ...managedRestaurants];
+  const [apiRestaurants, setApiRestaurants] = useState<typeof RESTAURANTS_LIST>([]);
+
+  useEffect(() => {
+    getPublicRestaurants()
+      .then(({ restaurantes }) => setApiRestaurants(restaurantes.map((restaurant, index) => mapRestaurant(restaurant, RESTAURANTS_LIST[index]?.image ?? ''))))
+      .catch(() => setApiRestaurants([]));
+  }, []);
+
+  const restaurants = apiRestaurants.length > 0 ? apiRestaurants : [...RESTAURANTS_LIST, ...managedRestaurants];
 
   return (
     <div className="min-h-screen bg-brand-secondary text-brand-primary selection:bg-brand-primary/10 pb-24 relative overflow-hidden">
