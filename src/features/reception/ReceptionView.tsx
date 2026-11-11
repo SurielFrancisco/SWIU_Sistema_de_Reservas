@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, CircleAlert, Coffee, DoorOpen, LayoutGrid, Users } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { setTableStatus } from '@/features/admin/store/adminSlice';
+import { getRestaurantReservations } from '@/lib/api/reservations';
+import { updateTableStatus } from '@/lib/api/restaurants';
 import type { TableInfo, TableStatus } from '@/features/restaurants/types';
 
 const statusLabel: Record<TableStatus, string> = {
@@ -44,6 +46,8 @@ export default function ReceptionView() {
   );
   const [floorId, setFloorId] = useState('');
   const [selected, setSelected] = useState<TableInfo | null>(null);
+  const [reservationCount, setReservationCount] = useState(0);
+  const [error, setError] = useState('');
   const floor =
     restaurant?.layout.floors.find((item) => item.id === floorId) ||
     restaurant?.layout.floors[0];
@@ -56,6 +60,13 @@ export default function ReceptionView() {
     [floor],
   );
 
+  useEffect(() => {
+    if (!restaurantId || !auth.token) return;
+    getRestaurantReservations(auth.token, restaurantId, { estado: 'UPCOMING' })
+      .then(({ reservas }) => setReservationCount(reservas.length))
+      .catch((requestError) => setError(requestError instanceof Error ? requestError.message : 'No se pudieron cargar las reservas.'));
+  }, [auth.token, restaurantId]);
+
   if (!restaurant || !floor) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-brand-secondary p-6 text-gray-500">
@@ -64,17 +75,27 @@ export default function ReceptionView() {
     );
   }
 
-  const changeStatus = (status: TableStatus) => {
+  const changeStatus = async (status: TableStatus) => {
     if (!selected) return;
-    dispatch(
-      setTableStatus({
+    const backendStatus = {
+      available: 'AVAILABLE',
+      reserved: 'RESERVED',
+      occupied: 'OCCUPIED',
+      'out-of-service': 'OUT_OF_SERVICE',
+    } as const;
+    try {
+      setError('');
+      await updateTableStatus(auth.token, selected.id, backendStatus[status]);
+      dispatch(setTableStatus({
         restaurantId: restaurant.id,
         floorId: floor.id,
         tableId: selected.id,
         status,
-      }),
-    );
-    setSelected({ ...selected, status });
+      }));
+      setSelected({ ...selected, status });
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'No se pudo actualizar la mesa.');
+    }
   };
 
   return (
@@ -123,11 +144,12 @@ export default function ReceptionView() {
         <div className="mb-6 grid gap-3 sm:grid-cols-3">
           <Metric icon={<LayoutGrid />} label="Mesas disponibles" value={counts.available} tone="text-emerald-700" />
           <Metric icon={<Coffee />} label="Mesas ocupadas" value={counts.occupied} tone="text-stone-500" />
-          <Metric icon={<CalendarDays />} label="Reservas próximas" value={reservations.length} tone="text-blue-700" />
+          <Metric icon={<CalendarDays />} label="Reservas próximas" value={reservationCount || reservations.length} tone="text-blue-700" />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
           <section className="rounded-[1.5rem] border border-border bg-white p-4 shadow-sm md:p-5">
+            {error && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="font-serif text-xl">Plano de mesas</h2>

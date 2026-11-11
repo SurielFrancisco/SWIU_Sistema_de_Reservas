@@ -8,99 +8,58 @@ import {
   LockKeyhole,
   Mail,
   ShieldCheck,
-  Store,
   UtensilsCrossed,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { getRestaurantHoursMessage, isRestaurantOpen } from '@/lib/restaurantHours';
+import { useAppDispatch } from '@/app/hooks';
+import { getRestaurant, getRestaurants, mapManagedRestaurant } from '@/lib/api/restaurants';
+import { login } from '@/lib/api/auth';
+import { hydrateAdmin } from '../admin/store/adminSlice';
 import { signIn } from './store/authSlice';
-
-// Credenciales de demostración — en producción vendrían del backend
-const DEMO_ADMINS: Record<string, { name: string; password: string }> = {
-  'admin@asador.com':    { name: 'Carlos Méndez',  password: 'admin123' },
-  'admin@sushizen.com':  { name: 'Yuki Tanaka',    password: 'admin123' },
-  'admin@terraza.com':   { name: 'Marina Torres',  password: 'admin123' },
-};
-
-// ─────────────────────────────────────────────
-// Credenciales de acceso visibles en el panel
-const demoCards = [
-  { email: 'admin@asador.com',   restaurant: 'El Asador Gourmet' },
-  { email: 'admin@sushizen.com', restaurant: 'Sushi Zen' },
-  { email: 'admin@terraza.com',  restaurant: 'La Terraza del Mar' },
-];
-// ─────────────────────────────────────────────
 
 export default function AdminLoginView() {
   const navigate   = useNavigate();
   const dispatch   = useAppDispatch();
-  const employees = useAppSelector((state) => state.admin.employees);
-  const restaurants = useAppSelector((state) => state.admin.restaurants);
-
   const [email,        setEmail       ] = useState('');
   const [password,     setPassword    ] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error,        setError       ] = useState('');
   const [isLoading,    setIsLoading   ] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
     setIsLoading(true);
-
-    // Simula una llamada asíncrona al backend
-    setTimeout(() => {
-      const trimmedEmail = email.toLowerCase().trim();
-      const admin = DEMO_ADMINS[trimmedEmail];
-      const employee = employees.find((item) => item.email === trimmedEmail);
-      const employeeRestaurant = employee
-        ? restaurants.find((restaurant) => restaurant.id === employee.restaurantId)
-        : undefined;
-
-      if (admin) {
-        if (admin.password !== password) {
-          setError('Contraseña incorrecta para esta cuenta.');
-          setIsLoading(false);
-          return;
-        }
-        dispatch(signIn({ email: trimmedEmail, role: 'admin', userName: admin.name }));
-        navigate('/admin', { replace: true });
-        return;
+    try {
+      const response = await login(email.trim().toLowerCase(), password);
+      if (response.user.rol === 'CLIENTE') throw new Error('Esta cuenta debe entrar desde el portal de clientes.');
+      const role = response.user.rol === 'ADMIN' ? 'admin' : response.user.rol === 'MESERO' ? 'waiter' : 'receptionist';
+      const { restaurantes } = await getRestaurants(response.token);
+      if (restaurantes.length === 0 && response.user.rol !== 'ADMIN') {
+        throw new Error('Esta cuenta de personal no tiene un restaurante asignado.');
       }
-
-      if (!employee) {
-        setError('No encontramos una cuenta administrativa o de personal con ese correo.');
-        setIsLoading(false);
-        return;
-      }
-
-      if (password.length < 6) {
-        setError('La contraseña debe tener al menos 6 caracteres.');
-        setIsLoading(false);
-        return;
-      }
-
-      if (!isRestaurantOpen(employeeRestaurant)) {
-        setError(`No puedes entrar fuera del horario del restaurante. ${getRestaurantHoursMessage(employeeRestaurant)}`);
-        setIsLoading(false);
-        return;
-      }
-
+      const details = await Promise.all(restaurantes.map(({ id }) => getRestaurant(id, response.token)));
+      const mapped = details.map(({ restaurante }, index) => mapManagedRestaurant(
+        restaurante,
+        response.user.email,
+        `https://images.unsplash.com/photo-${['1515003197210-e0cd71810b5f', '1517248135467-4c7edcad34c4', '1414235077428-338989a2e8c0'][index % 3]}?auto=format&fit=crop&w=1200&q=80`,
+      ));
+      dispatch(hydrateAdmin({ restaurants: mapped, employees: [] }));
+      const restaurantId = mapped[0]?.id;
       dispatch(signIn({
-        email: trimmedEmail,
-        role: employee.role,
-        userName: employee.name,
-        restaurantId: employee.restaurantId,
+        token: response.token,
+        userId: response.user.id,
+        email: response.user.email,
+        role,
+        userName: response.user.nombre,
+        restaurantId,
       }));
-      navigate(employee.role === 'waiter' ? `/mesero/${employee.restaurantId}` : `/recepcion/${employee.restaurantId}`, { replace: true });
-    }, 600);
-  }
-
-  function fillDemo(demoEmail: string) {
-    setEmail(demoEmail);
-    setPassword('admin123');
-    setError('');
+      navigate(role === 'admin' ? '/admin' : role === 'waiter' ? `/mesero/${restaurantId}` : `/recepcion/${restaurantId}`, { replace: true });
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'No se pudo iniciar sesión.');
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -297,29 +256,6 @@ export default function AdminLoginView() {
               )}
             </button>
           </form>
-
-          {/* Tarjetas de demo — solo móvil */}
-          <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-4 lg:hidden">
-            <p className="mb-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">
-              Cuentas de demo · contraseña: admin123
-            </p>
-            <div className="space-y-2">
-              {demoCards.map((card) => (
-                <button
-                  key={card.email}
-                  type="button"
-                  onClick={() => fillDemo(card.email)}
-                  className="flex w-full items-center gap-3 rounded-xl border border-gray-100 px-3 py-2.5 text-left text-sm transition-colors hover:bg-gray-50"
-                >
-                  <Store className="h-4 w-4 shrink-0 text-gray-400" />
-                  <span>
-                    <span className="block font-medium text-brand-primary">{card.restaurant}</span>
-                    <span className="text-xs text-gray-400">{card.email}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Enlace para crear cuenta de administrador */}
           <p className="mt-8 text-center text-sm text-gray-500">

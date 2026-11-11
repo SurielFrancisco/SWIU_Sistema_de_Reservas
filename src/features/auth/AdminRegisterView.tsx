@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
@@ -12,13 +12,8 @@ import {
   UtensilsCrossed,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAppDispatch } from '@/app/hooks';
-import { signIn } from './store/authSlice';
 
 export default function AdminRegisterView() {
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,20 +35,8 @@ export default function AdminRegisterView() {
       return;
     }
 
-    setPasswordError('');
-    setIsLoading(true);
-
-    setTimeout(() => {
-      const trimmedEmail = email.toLowerCase().trim();
-      dispatch(
-        signIn({
-          email: trimmedEmail,
-          role: 'admin',
-          userName: name.trim() || trimmedEmail.split('@')[0],
-        }),
-      );
-      navigate('/admin', { replace: true });
-    }, 600);
+    setPasswordError('El backend todavía no expone un endpoint para registrar administradores. Solicita que un administrador cree tu cuenta.');
+    setIsLoading(false);
   }
 
   return (
@@ -295,4 +278,3 @@ export default function AdminRegisterView() {
     </main>
   );
 }
-

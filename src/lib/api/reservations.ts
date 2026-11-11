@@ -26,6 +26,8 @@ interface ApiReservation {
   mesas: Array<{ mesaId: string; mesa?: { etiqueta: string } }>;
 }
 
+export type StaffReservation = ApiReservation;
+
 const formatDate = (value: string) => {
   const date = new Date(value);
   return {
@@ -58,6 +60,18 @@ export function mapReservation(api: ApiReservation): ReservationDetails {
 
 export const getMyReservations = (token: string) =>
   apiFetch<{ reservas: ApiReservation[] }>('/reservations/mine', { token });
+
+export const getRestaurantReservations = (
+  token: string,
+  restaurantId: string,
+  params: { date?: string; estado?: string } = {},
+) => {
+  const query = new URLSearchParams();
+  if (params.date) query.set('date', params.date);
+  if (params.estado) query.set('estado', params.estado);
+  const suffix = query.toString() ? `?${query.toString()}` : '';
+  return apiFetch<{ reservas: StaffReservation[] }>(`/restaurants/${restaurantId}/reservations${suffix}`, { token });
+};
 
 export const getAvailability = (
   token: string,
