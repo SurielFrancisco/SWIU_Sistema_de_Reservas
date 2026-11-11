@@ -30,7 +30,10 @@ export default function HomeView({ preview = false }: { preview?: boolean }) {
 
   useEffect(() => {
     getPublicRestaurants()
-      .then(({ restaurantes }) => setApiRestaurants(restaurantes.map((restaurant, index) => mapRestaurant(restaurant, RESTAURANTS_LIST[index]?.image ?? ''))))
+      .then(({ restaurantes }) => setApiRestaurants(restaurantes.map((restaurant, index) => mapRestaurant(
+        restaurant,
+        RESTAURANTS_LIST[index % RESTAURANTS_LIST.length]?.image ?? '',
+      ))))
       .catch(() => setApiRestaurants([]));
   }, []);
 

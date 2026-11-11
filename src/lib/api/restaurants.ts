@@ -88,6 +88,9 @@ export const getRestaurants = (token: string) =>
 export const getRestaurant = (id: string, token: string) =>
   apiFetch<{ restaurante: ApiRestaurant }>(`/restaurants/${id}`, { token });
 
+export const getPublicRestaurant = (id: string) =>
+  apiFetch<{ restaurante: ApiRestaurant }>(`/restaurants/${id}/public`);
+
 export const getReservationMethods = (id: string, token: string) =>
   apiFetch<{ modalidades: Array<{ codigo: string; activa: boolean }> }>(
     `/restaurants/${id}/reservation-methods`,

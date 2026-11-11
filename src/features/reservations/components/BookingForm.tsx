@@ -10,7 +10,8 @@ import LoginRequiredModal from "./LoginRequiredModal";
 import PaymentModal from "./PaymentModal";
 import type { ReservationMethod, RestaurantLayout, RestaurantSchedule, TableInfo, Weekday } from '@/features/restaurants/types';
 import { ApiError } from '@/lib/api/client';
-import { createReservation } from '@/lib/api/reservations';
+import { createReservation, getAvailability } from '@/lib/api/reservations';
+import { getReservationMethods } from '@/lib/api/restaurants';
 
 const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
   const hour24 = Math.floor(i / 2);
@@ -57,7 +58,11 @@ export default function BookingForm({
   const paymentOption = getPaymentOption(restaurantId);
   const schedule = managedRestaurant?.schedule ?? defaultSchedule;
   const configuredMethods = managedRestaurant?.reservationMethods ?? ['automatic-free', 'table-free'];
-  const availableMethods = methodOptions.filter((method) => configuredMethods.includes(method.value));
+  const [serverMethods, setServerMethods] = useState<ReservationMethod[] | null>(null);
+  const [serverAvailableTableIds, setServerAvailableTableIds] = useState<string[] | null>(null);
+  const availableMethods = methodOptions.filter((method) =>
+    (serverMethods ?? configuredMethods).includes(method.value),
+  );
   const reservationMethod = availableMethods.some((method) => method.value === draft.reservationMethod)
     ? draft.reservationMethod
     : availableMethods[0]?.value ?? 'table-free';
@@ -88,6 +93,7 @@ export default function BookingForm({
       activeFloor?.tables
         .filter((table) =>
           table.status === 'available' &&
+          (serverAvailableTableIds === null || serverAvailableTableIds.includes(table.id)) &&
           table.capacity >= draft.guests &&
           !isTableReserved(reservations, {
             restaurantId: draft.restaurantId ?? '',
@@ -99,8 +105,37 @@ export default function BookingForm({
           }),
         )
         .sort((first, second) => first.capacity - second.capacity || first.id.localeCompare(second.id)) ?? [],
-    [activeFloor, draft.date, draft.durationMinutes, draft.guests, draft.restaurantId, draft.time, reservations],
+    [activeFloor, draft.date, draft.durationMinutes, draft.guests, draft.restaurantId, draft.time, reservations, serverAvailableTableIds],
   );
+
+  useEffect(() => {
+    if (!auth.token || !restaurantId) return;
+    getReservationMethods(restaurantId, auth.token)
+      .then(({ modalidades }) => {
+        const codeMap: Record<string, ReservationMethod> = {
+          AUTO_FREE: 'automatic-free',
+          ZONE_FREE: 'zone-free',
+          TABLE_FREE: 'table-free',
+        };
+        setServerMethods(modalidades.filter((item) => item.activa).map((item) => codeMap[item.codigo]).filter(Boolean));
+      })
+      .catch(() => setServerMethods(null));
+  }, [auth.token, restaurantId]);
+
+  useEffect(() => {
+    if (!auth.token || !restaurantId || !draft.date || !draft.time) return;
+    const timer = window.setTimeout(() => {
+      getAvailability(auth.token, restaurantId, {
+        date: draft.date,
+        time: draft.time,
+        duration: draft.durationMinutes,
+        guests: draft.guests,
+      })
+        .then(({ mesas }) => setServerAvailableTableIds(mesas.map((mesa) => mesa.id)))
+        .catch(() => setServerAvailableTableIds(null));
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [auth.token, draft.date, draft.time, draft.durationMinutes, draft.guests, restaurantId]);
 
   const today = getLocalDate();
   const nextSlot = getNextReservationSlot();

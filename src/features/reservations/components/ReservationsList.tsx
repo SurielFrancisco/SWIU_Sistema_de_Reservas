@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { cancelReservation } from '../store/reservationsSlice';
+import { cancelReservation as cancelReservationApi } from '@/lib/api/reservations';
+import { ApiError } from '@/lib/api/client';
 import { CalendarDays, Clock, Users, MapPin, XCircle, User, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ReservationsList() {
   const dispatch = useAppDispatch();
   const reservations = useAppSelector((state) => state.reservations.reservations);
+  const token = useAppSelector((state) => state.auth.token);
 
   const [reservationToCancel, setReservationToCancel] = useState<string | null>(null);
   const cancelDialogRef = useRef<HTMLDivElement>(null);
@@ -19,10 +22,17 @@ export default function ReservationsList() {
     setReservationToCancel(id);
   };
 
-  const confirmCancel = () => {
-    if (reservationToCancel) {
+  const [cancelError, setCancelError] = useState<string | null>(null);
+
+  const confirmCancel = async () => {
+    if (!reservationToCancel || !token) return;
+    try {
+      await cancelReservationApi(token, reservationToCancel);
       dispatch(cancelReservation(reservationToCancel));
       setReservationToCancel(null);
+      setCancelError(null);
+    } catch (error) {
+      setCancelError(error instanceof ApiError ? error.message : 'No se pudo cancelar la reserva.');
     }
   };
 
@@ -42,6 +52,11 @@ export default function ReservationsList() {
 
   return (
     <>
+      {cancelError && (
+        <div role="alert" className="fixed inset-x-4 top-4 z-[80] mx-auto max-w-md rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-lg">
+          {cancelError}
+        </div>
+      )}
       <div className="flex-1 bg-gray-50/50 p-6 md:p-8 rounded-3xl overflow-y-auto relative">
         <div className="max-w-5xl mx-auto space-y-8">
           

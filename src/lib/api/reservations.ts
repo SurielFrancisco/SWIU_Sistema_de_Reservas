@@ -59,6 +59,30 @@ export function mapReservation(api: ApiReservation): ReservationDetails {
 export const getMyReservations = (token: string) =>
   apiFetch<{ reservas: ApiReservation[] }>('/reservations/mine', { token });
 
+export const getAvailability = (
+  token: string,
+  restaurantId: string,
+  params: { date: string; time: string; duration: number; guests: number },
+) => {
+  const query = new URLSearchParams({
+    date: params.date,
+    time: params.time,
+    duration: String(params.duration),
+    guests: String(params.guests),
+  });
+  return apiFetch<{ disponible: boolean; motivo: string | null; mesas: Array<{ id: string; areaId: string }> }>(
+    `/restaurants/${restaurantId}/availability?${query.toString()}`,
+    { token },
+  );
+};
+
+export const cancelReservation = (token: string, id: string) =>
+  apiFetch<{ reserva: ApiReservation }>(`/reservations/${id}/cancel`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify({}),
+  });
+
 export const createReservation = (
   token: string,
   input: {

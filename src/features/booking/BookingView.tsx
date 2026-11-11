@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '@/app/hooks';
 import type { RestaurantLayout } from '@/features/restaurants/types';
-import { getRestaurant, mapLayout } from '@/lib/api/restaurants';
+import { getPublicRestaurant, getRestaurant, mapLayout } from '@/lib/api/restaurants';
 
 export default function BookingView() {
   const { id } = useParams();
@@ -18,8 +18,9 @@ export default function BookingView() {
   const [role, setRole] = useState<'cliente' | 'recepcionista'>('cliente');
 
   useEffect(() => {
-    if (!id || !token) return;
-    getRestaurant(id, token)
+    if (!id) return;
+    const request = token ? getRestaurant(id, token) : getPublicRestaurant(id);
+    request
       .then(({ restaurante }) => setApiLayout(mapLayout(restaurante)))
       .catch(() => setApiLayout(undefined));
   }, [id, token]);
