@@ -12,8 +12,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { setTableStatus } from '@/features/admin/store/adminSlice';
+import { useAppSelector } from '@/app/hooks';
 import type { TableInfo, TableStatus } from '@/features/restaurants/types';
 
 const statusLabel: Record<TableStatus, string> = {
@@ -41,7 +40,6 @@ const tableShape: Record<TableInfo['shape'], string> = {
 
 export default function WaiterView() {
   const { restaurantId } = useParams();
-  const dispatch = useAppDispatch();
   const auth = useAppSelector((state) => state.auth);
 
   const restaurant = useAppSelector((state) =>
@@ -82,21 +80,9 @@ export default function WaiterView() {
     );
   }
 
-  const changeStatus = (status: TableStatus) => {
-    if (!currentSelectedTable) return;
-    dispatch(
-      setTableStatus({
-        restaurantId: restaurant.id,
-        floorId: floor.id,
-        tableId: currentSelectedTable.id,
-        status,
-      }),
-    );
-  };
+  const changeStatus = (_status: TableStatus) => undefined;
 
-  // Reglas de negocio para el rol de mesero:
-  // - Solo puede cambiar de 'occupied' a 'available' (liberar mesa)
-  // - O poner/quitar 'out-of-service'
+  // El backend reserva los cambios de estado de mesa para ADMIN y RECEPCIONISTA.
   const canReleaseTable = currentSelectedTable?.status === 'occupied';
   const isOutOfService = currentSelectedTable?.status === 'out-of-service';
   const isReserved = currentSelectedTable?.status === 'reserved';
@@ -337,8 +323,9 @@ export default function WaiterView() {
                     {!isOutOfService ? (
                       <button
                         type="button"
+                        disabled
                         onClick={() => changeStatus('out-of-service')}
-                        className="flex w-full items-center justify-between rounded-xl border border-red-200 bg-red-50/50 p-3.5 text-left text-sm font-medium text-red-700 transition-all hover:bg-red-50 hover:border-red-300 shadow-sm"
+                        className="flex w-full cursor-not-allowed items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-3.5 text-left text-sm font-medium text-gray-400 opacity-60"
                       >
                         <div className="flex items-center gap-2.5">
                           <XCircle className="h-4 w-4 text-red-600" />
@@ -354,8 +341,9 @@ export default function WaiterView() {
                       /* Si ya está fuera de servicio, permitir restablecerla a disponible */
                       <button
                         type="button"
+                        disabled
                         onClick={() => changeStatus('available')}
-                        className="flex w-full items-center justify-between rounded-xl border border-emerald-300 bg-emerald-50 p-3.5 text-left text-sm font-medium text-emerald-800 transition-all hover:bg-emerald-100 shadow-sm"
+                        className="flex w-full cursor-not-allowed items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-3.5 text-left text-sm font-medium text-gray-400 opacity-60"
                       >
                         <div className="flex items-center gap-2.5">
                           <CheckCircle2 className="h-4 w-4 text-emerald-600" />
