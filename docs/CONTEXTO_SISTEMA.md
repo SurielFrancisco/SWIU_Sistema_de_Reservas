@@ -1,6 +1,6 @@
 # Contexto del sistema — SDReservas
 
-> Documento de referencia técnica y funcional del estado actual del repositorio. Actualizado a partir del código fuente, no de un backend desplegado.
+> Documento de referencia técnica y funcional del estado actual del repositorio. El frontend consume la API desplegada de SDReservas.
 
 > [!IMPORTANT]
 > **Toda modificación al sistema debe registrarse en [`CHANGELOG.md`](./CHANGELOG.md).**
@@ -18,7 +18,7 @@ El sistema también permite:
 - Simular un anticipo opcional para determinados restaurantes.
 - Alternar visualmente entre los roles de cliente y recepcionista.
 
-No existe servidor, base de datos, API ni integración de pagos real: toda la información se mantiene en el navegador.
+La aplicación consume la API desplegada de SDReservas para autenticación, catálogo, planos, disponibilidad y reservas. Los pagos continúan siendo simulados y Redux conserva una copia local de la sesión, reservas y configuración administrativa para la interfaz.
 
 ## 2. Tecnología y ejecución
 
@@ -39,11 +39,14 @@ No existe servidor, base de datos, API ni integración de pagos real: toda la in
 
 ```bash
 pnpm install
+cp .env.example .env.local
 pnpm dev       # entorno local, normalmente en http://localhost:5173
 pnpm build     # comprobación TypeScript y build de producción
 pnpm lint
 pnpm preview
 ```
+
+La URL predeterminada de la API es `https://sdreservas-api-1.onrender.com/api/v1`. `VITE_API_URL` permite cambiarla sin modificar el código.
 
 El alias `@` apunta a `src`, definido en `vite.config.ts` y `tsconfig.app.json`.
 
@@ -87,7 +90,7 @@ src/
 
 `HomeView` muestra la marca, un hero, búsqueda visual, el catálogo de restaurantes y un *slide-over* con «Mis Reservas». Cada tarjeta navega a `/restaurant/:id`. El botón de perfil lleva a `/login`.
 
-El campo de búsqueda y los botones «Buscar» y «Ver todos» son actualmente decorativos: no filtran ni cambian de vista.
+El campo de búsqueda filtra el catálogo por nombre, tipo de cocina o ubicación mientras se escribe. «Buscar» confirma la búsqueda y desplaza el catálogo a la vista; «Ver todos» limpia el término y restaura todos los restaurantes.
 
 ### Inicio de sesión: `/login` y `/login/admin`
 
@@ -170,7 +173,7 @@ Al cargar, el store intenta restaurar `auth` y la lista de reservas desde `local
 sdreservas-state
 ```
 
-Por tanto, los datos son locales al navegador/dispositivo, no compartidos entre usuarios, y pueden borrarse al limpiar el almacenamiento del sitio. El borrador no se persiste: se reinicia con cada recarga.
+La sesión y una copia de las reservas son locales al navegador/dispositivo, mientras que los datos operativos principales se leen y escriben en la API. El borrador no se persiste: se reinicia con cada recarga.
 
 ## 8. Modelo de datos
 
@@ -210,13 +213,13 @@ La interfaz usa una estética editorial sobria:
 
 El proyecto es un prototipo de frontend. Para llevarlo a producción se necesitaría, como mínimo:
 
-- API y base de datos para usuarios, restaurantes, mesas, reservas y pagos.
+- Disponibilidad de la API desplegada y configuración de despliegue.
 - Autenticación real, gestión de contraseñas, cierre de sesión y protección de rutas.
 - Control de concurrencia en el servidor para impedir dobles reservas entre dispositivos.
 - Validación de capacidad de mesa frente al número de comensales.
 - Validaciones de horario comercial, zona horaria, datos personales y formato de pago.
 - Integración con una pasarela de pago real; el formulario actual no captura ni transmite cobros reales.
-- Búsqueda y filtros funcionales en la página principal.
+- Búsqueda y filtros adicionales en la página principal.
 - Gestión operativa real para el rol de recepcionista.
 - Accesibilidad adicional: leyenda completa de todos los estados, etiquetas accesibles en controles y semántica/gestión de foco más robusta para modales.
 

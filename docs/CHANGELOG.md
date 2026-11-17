@@ -30,6 +30,9 @@ Agrega una fila a la tabla de la versión activa (o crea una nueva sección si i
 
 | Fecha | Tipo | Área | Descripción | Archivos clave |
 |---|---|---|---|---|
+| 2026-11-17 | `fix` | `app` | Se restaura como destino predeterminado la API desplegada en Render en lugar del backend local | `client.ts`, `.env.example`, `README.md`, `CONTEXTO_SISTEMA.md` |
+| 2026-11-17 | `docs` | `app` | Se documenta el uso del backend local `sdreservas-api`, su URL y el arranque coordinado de frontend y API | `README.md`, `CONTEXTO_SISTEMA.md` |
+| 2026-11-17 | `feat` | `home` | Se habilita el buscador de la pantalla principal para filtrar restaurantes por nombre, tipo o ubicación, confirmar la búsqueda y restaurar el catálogo completo | `HomeView.tsx`, `CONTEXTO_SISTEMA.md` |
 | 2026-10-28 | `feat` | `auth` | Pantalla de registro de usuario nuevo (`/register`) con campos de nombre, correo y contraseña con validación, animación de error y redirección automática al inicio tras el registro | `RegisterView.tsx`, `App.tsx`, `authSlice.ts` |
 | 2026-10-28 | `fix` | `auth` | Botón "Crea una cuenta" en `LoginView` convertido a `<Link to="/register">` para navegar correctamente a la nueva pantalla | `LoginView.tsx` |
 | 2026-10-28 | `refactor` | `auth` | `signIn` acepta campo `userName?` opcional para preservar el nombre real ingresado en el registro, en lugar de derivarlo del correo | `authSlice.ts` |

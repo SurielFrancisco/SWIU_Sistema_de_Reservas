@@ -37,11 +37,14 @@ cd SistemaDeReservas
 # 3. Instala las dependencias
 pnpm install
 
-# 4. Inicia el servidor de desarrollo
+# 4. Configura la URL de la API de Render (opcional: este es el valor predeterminado)
+cp .env.example .env.local
+
+# 5. Inicia el servidor de desarrollo del frontend
 pnpm run dev
 ```
 
-Una vez que el servidor inicie, abre `http://localhost:5173` en tu navegador.
+La aplicación usa `https://sdreservas-api-1.onrender.com/api/v1` por defecto y el frontend queda disponible en `http://localhost:5173`.
 
 ## Navegación de la Aplicación
 
@@ -56,5 +59,5 @@ Una vez que el servidor inicie, abre `http://localhost:5173` en tu navegador.
 - **`features/auth/`**: estado y pantallas de autenticación.
 - **`lib/`**: utilidades compartidas para fechas e identificadores.
 
-Las reservas se guardan localmente en el navegador para que el estado de sesión y el historial no se pierdan al recargar. Cada reserva conserva el restaurante, piso, mesa, fecha, hora y duración; la disponibilidad se calcula dentro de ese contexto.
+La autenticación, el catálogo, la disponibilidad y las reservas se consumen desde el backend configurado en `VITE_API_URL`. El estado de sesión y una copia local de las reservas se conservan en el navegador para mantener la interfaz al recargar.
 

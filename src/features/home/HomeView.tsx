@@ -27,6 +27,7 @@ export default function HomeView({ preview = false }: { preview?: boolean }) {
   const auth = useAppSelector((state) => state.auth);
   const managedRestaurants = useAppSelector((state) => state.admin.restaurants.filter((restaurant) => restaurant.status === 'published'));
   const [apiRestaurants, setApiRestaurants] = useState<typeof RESTAURANTS_LIST>([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     getPublicRestaurants()
@@ -38,6 +39,28 @@ export default function HomeView({ preview = false }: { preview?: boolean }) {
   }, []);
 
   const restaurants = apiRestaurants.length > 0 ? apiRestaurants : [...RESTAURANTS_LIST, ...managedRestaurants];
+  const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase();
+  const filteredRestaurants = normalizedSearchTerm
+    ? restaurants.filter((restaurant) =>
+      [restaurant.name, restaurant.type, restaurant.location]
+        .some((value) => value.toLocaleLowerCase().includes(normalizedSearchTerm)),
+    )
+    : restaurants;
+
+  const scrollToRestaurants = () => {
+    document.getElementById('restaurants')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSearchTerm((currentTerm) => currentTerm.trim());
+    scrollToRestaurants();
+  };
+
+  const showAllRestaurants = () => {
+    setSearchTerm('');
+    scrollToRestaurants();
+  };
 
   return (
     <div className="min-h-screen bg-brand-secondary text-brand-primary selection:bg-brand-primary/10 pb-24 relative overflow-hidden">
@@ -123,25 +146,28 @@ export default function HomeView({ preview = false }: { preview?: boolean }) {
             transition={{ delay: 0.3, duration: 0.6 }}
             className="mt-12 max-w-2xl mx-auto relative"
           >
-            <div className="flex items-center bg-white rounded-full shadow-lg shadow-gray-200/50 p-2 border border-gray-100 transition-shadow focus-within:shadow-xl focus-within:shadow-gray-200/80 focus-within:border-gray-200">
+            <form onSubmit={handleSearch} className="flex items-center bg-white rounded-full shadow-lg shadow-gray-200/50 p-2 border border-gray-100 transition-shadow focus-within:shadow-xl focus-within:shadow-gray-200/80 focus-within:border-gray-200">
               <div className="pl-6 pr-2">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
                 className="flex-1 w-full h-12 md:h-14 bg-transparent text-brand-primary placeholder-gray-400 focus:outline-none text-base md:text-lg min-w-0"
                 placeholder="Buscar restaurantes..."
+                aria-label="Buscar restaurantes"
               />
-              <button className="px-5 md:px-8 h-12 md:h-14 rounded-full text-white bg-brand-primary hover:bg-brand-primary/90 transition-colors font-medium text-base md:text-lg flex items-center gap-2 shrink-0">
+              <button type="submit" className="px-5 md:px-8 h-12 md:h-14 rounded-full text-white bg-brand-primary hover:bg-brand-primary/90 transition-colors font-medium text-base md:text-lg flex items-center gap-2 shrink-0">
                 Buscar
               </button>
-            </div>
+            </form>
           </motion.div>
         </div>
       </div>
 
       {/* Recommended Section (Editorial Cards) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 mt-10">
+      <div id="restaurants" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 mt-10">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -151,7 +177,11 @@ export default function HomeView({ preview = false }: { preview?: boolean }) {
           <h2 className="text-3xl font-serif font-medium text-brand-primary">
             Selecciones Premium
           </h2>
-          <button className="text-sm font-medium text-gray-500 hover:text-brand-primary transition-colors flex items-center gap-1 group">
+          <button
+            type="button"
+            onClick={showAllRestaurants}
+            className="text-sm font-medium text-gray-500 hover:text-brand-primary transition-colors flex items-center gap-1 group"
+          >
             Ver todos
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
@@ -164,7 +194,7 @@ export default function HomeView({ preview = false }: { preview?: boolean }) {
           viewport={{ once: true, margin: "-100px" }}
           className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12"
         >
-          {restaurants.map((restaurant, index) => (
+          {filteredRestaurants.map((restaurant, index) => (
             <Link
               key={restaurant.id}
               to={`/restaurant/${restaurant.id}`}
@@ -221,6 +251,11 @@ export default function HomeView({ preview = false }: { preview?: boolean }) {
             </Link>
           ))}
         </motion.div>
+        {filteredRestaurants.length === 0 && (
+          <p className="py-12 text-center text-gray-500">
+            No encontramos restaurantes para «{searchTerm}».
+          </p>
+        )}
       </div>
 
       {/* Slide-Over de Reservas */}
